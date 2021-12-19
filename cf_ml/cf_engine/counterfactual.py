@@ -49,4 +49,21 @@ class CounterfactualExampleBySubset:
     def original_instances(self):
         return self._original_instances
 
- 
+    @original_instances.setter
+    def original_instances(self, original_instances):
+        self._original_instances = original_instances
+
+    def append_counterfactuals(self, feature, cfs):
+        if isinstance(cfs, pd.DataFrame):
+            cfs = CounterfactualExample(self._data_meta, cfs)
+        elif isinstance(cfs, CounterfactualExample):
+            pass
+        else:
+            raise TypeError(
+                "Counterfactuals should be either a DataFrame or a CounterFactualExample.")
+
+        self._subsets[feature] = cfs
+
+    @property
+    def subsets(self):
+        return self._subsets
