@@ -38,4 +38,36 @@ class Dataset:
         self._fit_one_hot_encoder()
 
         train_df, test_df = train_test_split(
-            self._data, train_size=split_rate, rand
+            self._data, train_size=split_rate, random_state=0)
+
+        self._train_X = train_df[self.features]
+        self._train_y = train_df[self.target]
+        self._test_X = test_df[self.features]
+        self._test_y = test_df[self.target]
+
+    def _check_and_clean_description(self, description):
+        """Check and fill the descriptions to the dataset."""
+        clean_description = {col: {'index': self.columns.index(col), 'type': info['type']} 
+			for col, info in description.items()}
+        # check whether each column is noted as numerical or categorical
+        for col, info in clean_description.items():
+            if info['type'] not in ['numerical', 'categorical']:
+                raise ValueError(
+                    "Illegal description of attribute: {}".format(col))
+
+        for col, info in description.items():
+            # complete min, max, and decile for numerical attributes
+            if info['type'] == 'numerical':
+                clean_description[col]['min'] = info.get('min', float(self.data[col].min()))
+                clean_description[col]['max'] = info.get('max', float(self.data[col].max()))
+                decile = int(info.get('decile', 0))
+                clean_description[col]['decile'] = decile
+                clean_description[col]['scale'] = 1 if decile == 0 else 0.1 ** decile
+            # complete categories for categorical attributes
+            else:
+                clean_description[col]['categories'] = info.get('category',
+                                                                self._data[col].unique().tolist())
+
+        return clean_description
+
+    def _check_
