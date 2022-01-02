@@ -70,4 +70,40 @@ class Dataset:
 
         return clean_description
 
-    def _check_
+    def _check_dataframe(self):
+        """Check the stringify the categorical data in the dataframe."""
+        for col in self.columns:
+            if not self.is_num(col):
+                self._data[col] = self._data[col].apply(lambda x: str(x))
+                self._description[col]['categories'] = [str(cat) for cat in
+                                                        self._description[col]['categories']]
+
+    def is_num(self, column_name):
+        """Check whether the type of the column is numerical."""
+        return self.description[column_name]['type'] == 'numerical'
+
+    def get_dummy_columns(self, column, categories=None):
+        """Get the names of the dummy columns from the original column name and categories."""
+        if self.is_num(column):
+            return [column]
+        if categories is None:
+            categories = self.description[column]['categories']
+        return ["{}_{}".format(column, cat) for cat in categories]
+
+    def _get_all_columns(self, columns):
+        dummy_columns = []
+        for col in columns:
+            dummy_columns.extend(self.get_dummy_columns(col))
+        return dummy_columns
+
+    def _fit_normalizer(self):
+        self._feature_scalar.fit(self._data[self.numerical_features])
+
+    def _fit_one_hot_encoder(self):
+        pass
+
+    def _normalize(self, data):
+        data = data.copy()
+        data[self.numerical_features] = self._feature_scalar.transform(
+            data[self.numerical_features])
+        return d
