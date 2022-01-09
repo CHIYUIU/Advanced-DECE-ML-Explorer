@@ -106,4 +106,40 @@ class Dataset:
         data = data.copy()
         data[self.numerical_features] = self._feature_scalar.transform(
             data[self.numerical_features])
-        return d
+        return data
+
+    def normalize_feature(self, feature, value):
+        """Get the normalized feature value."""
+        data = pd.DataFrame(np.zeros((1, len(self.numerical_features))),
+                            columns=self.numerical_features)
+        data[feature] = value
+        data[data.columns] = self._feature_scalar.transform(data)
+        return data[feature]
+
+    def _denormalize(self, data):
+        data = data.copy()
+        data[self.numerical_features] = self._feature_scalar.inverse_transform(
+            data[self.numerical_features])
+        # Refine the numerical feauture values with valid precisions.
+        for f in self.numerical_features:
+            data[f] = np.round(data[f].astype(float) / self.description[f]['scale']) * \
+                      self.description[f]['scale']
+        return data
+
+    def _to_dummy(self, data):
+        data = data.copy()
+        cat_cols = [col for col in self.categorical_features + [self.target] if
+                    col in data.columns]
+        for col in cat_cols:
+            for cat in self.description[col]['categories']:
+                data["{}_{}".format(col, cat)] = data[col].apply(lambda x: x == cat).astype(int)
+
+        cols = [col for col in self.dummy_columns if col in data.columns]
+        return data[cols]
+
+    def _from_dummy(self, data, inplace=True):
+        data = data.copy()
+        for col in self.columns:
+            if not self.is_num(col):
+                cats = self._description[col]['categories']
+                dummy_cols 
