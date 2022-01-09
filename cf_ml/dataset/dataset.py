@@ -142,4 +142,41 @@ class Dataset:
         for col in self.columns:
             if not self.is_num(col):
                 cats = self._description[col]['categories']
-                dummy_cols 
+                dummy_cols = ['{}_{}'.format(col, cat) for cat in cats]
+                intersection_cols = [col for col in dummy_cols if col in data.columns]
+                if len(intersection_cols) > 0:
+                    data[col] = self._stack_dummy(data[intersection_cols], col)
+                    if inplace:
+                        for col in intersection_cols:
+                            data.pop(col)
+
+        cols = [col for col in self.columns if col in data.columns]
+
+        return data[cols]
+
+    def _stack_dummy(self, data, original_column):
+        cats = self._description[original_column]['categories']
+        dummy_col = ['{}_{}'.format(original_column, cat) for cat in cats]
+        category_index = data.loc[:, dummy_col].values.argmax(axis=1)
+        category_value = [cats[index] for index in category_index]
+        return category_value
+
+    def _any2df(self, data, columns):
+        if isinstance(data, dict):
+            data = [data]
+        return pd.DataFrame(data, columns=columns)
+
+    def preprocess(self, data):
+        """Pre-process data, including both feature values and target values."""
+        data = self._any2df(data, self.columns)
+        return self._normalize(self._to_dummy(data))
+
+    def preprocess_X(self, data):
+        """Pre-process feature data."""
+        data = self._any2df(data, self.features)
+        return self._normalize(self._to_dummy(data))
+
+    def preprocess_y(self, data):
+        """Pre-process target data."""
+        data = self._any2df(data, [self.target])
+        r
