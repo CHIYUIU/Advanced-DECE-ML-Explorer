@@ -179,4 +179,40 @@ class Dataset:
     def preprocess_y(self, data):
         """Pre-process target data."""
         data = self._any2df(data, [self.target])
-        r
+        return self._to_dummy(pd.DataFrame(data))
+
+    def inverse_preprocess(self, data):
+        """Inversely process data, including both feature values and target values."""
+        data = self._any2df(data, self.dummy_columns)
+        return self._from_dummy(self._denormalize(data))
+
+    def inverse_preprocess_X(self, data):
+        """Inversely process feature data."""
+        data = self._any2df(data, self.dummy_features)
+        return self._from_dummy(self._denormalize(data))
+
+    def inverse_preprocess_y(self, data):
+        """Inversely process target data."""
+        data = self._any2df(data, self.dummy_target)
+        return self._from_dummy(pd.DataFrame(data))
+
+    def get_subset(self, index='all', filters=None, preprocess=True):
+        """Get a subset of data from the given indexes and constrained by the given filters."""
+        if filters is None:
+            filters = {}
+        if type(index) == int:
+            index = [index]
+        elif type(index) == str and index == 'all':
+            index = self._data.index
+        elif type(index) == str and index == 'train':
+            index = self._train_X.index
+        elif type(index) == str and index == 'test':
+            index = self._test_X.index
+
+        filtered_df = self._data.iloc[index]
+
+        for col, info in filters.items():
+            if 'min' in info:
+                filtered_df = filtered_df[filtered_df[col] >= info['min']]
+            if 'max' in info:
+                
