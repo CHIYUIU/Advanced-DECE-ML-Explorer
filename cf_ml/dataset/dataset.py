@@ -215,4 +215,34 @@ class Dataset:
             if 'min' in info:
                 filtered_df = filtered_df[filtered_df[col] >= info['min']]
             if 'max' in info:
-                
+                filtered_df = filtered_df[filtered_df[col] < info['max']]
+            if 'categories' in info:
+                filtered_df = filtered_df[filtered_df[col].isin(info['categories'])]
+
+        if len(filtered_df) == 0:
+            return None
+
+        if preprocess:
+            return self.preprocess(filtered_df)
+        else:
+            return filtered_df
+
+    def get_mads(self, preprocess=True):
+        """Gets median absolute deviation (MAD) values of all features. """
+        columns = self.dummy_features if preprocess else self.features
+        mads = {col: 1 for col in columns}
+        data = self.preprocess(self.data) if preprocess else self.data
+        for feature in self.numerical_features:
+            mads[feature] = np.median(abs(data[feature].values - np.median(data[feature].values)))
+        return mads
+
+    def get_universal_range(self):
+        """Get the range of all feature values."""
+        categorical_feature_range = {cat_f: {'categories': self.description[cat_f]['categories']}
+                                     for cat_f in self.categorical_features}
+        numerical_feature_range = {num_f: {
+            'decile': self.description[num_f]['decile'],
+            'min': int(self.description[num_f]['min'] / self.description[num_f]['scale']),
+            'max': int(self.description[num_f]['max'] / self.description[num_f]['scale']) + 1} for
+            num_f in self.numerical_features}
+        return {**categorical_feature_range, **nu
