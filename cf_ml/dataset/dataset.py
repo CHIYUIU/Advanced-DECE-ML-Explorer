@@ -245,4 +245,64 @@ class Dataset:
             'min': int(self.description[num_f]['min'] / self.description[num_f]['scale']),
             'max': int(self.description[num_f]['max'] / self.description[num_f]['scale']) + 1} for
             num_f in self.numerical_features}
-        return {**categorical_feature_range, **nu
+        return {**categorical_feature_range, **numerical_feature_range}
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def description(self):
+        return self._description
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def target(self):
+        return self._target
+
+    @property
+    def prediction(self):
+        return "{}_pred".format(self._target)
+
+    @property
+    def columns(self):
+        return self._columns
+
+    @property
+    def dummy_columns(self):
+        return self._dummy_columns
+
+    @property
+    def dummy_target(self):
+        return self._get_all_columns([self.target])
+
+    @property
+    def features(self):
+        return self._features
+
+    @property
+    def dummy_features(self):
+        return self._get_all_columns(self.features)
+
+    @property
+    def numerical_features(self):
+        return self._numerical_features
+
+    @property
+    def categorical_features(self):
+        return self._categorical_features
+
+    def get_train_X(self, preprocess=True):
+        return self.preprocess_X(self._train_X) if preprocess else self._train_X
+
+    def get_train_y(self, preprocess=True):
+        return self.preprocess_y(self._train_y) if preprocess else self._train_y
+
+    def get_test_X(self, preprocess=True):
+        return self.preprocess_X(self._test_X) if preprocess else self._test_X
+
+    def get_test_y(self, preprocess=True):
+        return self.preprocess_y(self._test_y) if preprocess else self._test_y
