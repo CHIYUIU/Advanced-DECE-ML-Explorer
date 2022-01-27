@@ -70,4 +70,44 @@ class PytorchModelManager(ModelManager):
     Args:
         dataset: dataset.Dataset, the target dataset.
         model_name: str, name of the model.
-        root_dir: str, the path of the directory to store the model a
+        root_dir: str, the path of the directory to store the model and relative information.
+        model: a torch model or None, if model is none, a new MLP (#f, 60, 30, #c) will be created.
+    """
+
+    def __init__(self, dataset, model_name='MLP', root_dir=OUTPUT_ROOT, model=None):
+        self._dataset = dataset
+        self._name = model_name
+        self._dir_manager = DirectoryManager(self._dataset, model_name, root=root_dir)
+
+        self._features = self._dataset.dummy_features
+        self._target = self._dataset.dummy_target
+        self._prediction = "{}_pred".format(self._dataset.target)
+
+        if model is None:
+            self._model = MLP(feature_num=len(self._features),
+                              class_num=len(self._target))
+        else:
+            self._model = model
+
+        train_X = torch.from_numpy(
+            self.dataset.get_train_X().values).float()
+        train_y = torch.from_numpy(
+            self.dataset.get_train_y().values).float()
+        test_X = torch.from_numpy(
+            self.dataset.get_test_X().values).float()
+        test_y = torch.from_numpy(
+            self.dataset.get_test_y().values).float()
+
+        self.train_dataset = TensorDataset(train_X, train_y)
+        self.test_dataset = TensorDataset(test_X, test_y)
+
+        self._train_accuracy = None
+        self._test_accuracy = None
+
+    def load_model(self):
+        """Load model states."""
+        self._dir_manager.load_meta()
+        self._model.load_state_dict(self._dir_manager.load_pytorch_model_state())
+
+    def forward(self, x):
+  
