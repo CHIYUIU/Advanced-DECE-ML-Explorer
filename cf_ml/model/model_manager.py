@@ -145,4 +145,39 @@ class PytorchModelManager(ModelManager):
         report_df[self._dataset.target] = instances[self._dataset.target]
         return report_df.set_index(instances.index)
 
-    # TODO: remove this
+    # TODO: remove this function in the later version.
+    def train(self, batch_size=32, epoch=40, lr=0.002, verbose=True, save_result=True):
+        """Train the model with an RMS optimizer."""
+        dataset = self.train_dataset
+        data_loader = DataLoader(
+            dataset=dataset, batch_size=batch_size, shuffle=True)
+
+        criterion = nn.BCELoss()
+        optimizer = optim.RMSprop(self._model.parameters(), lr=lr)
+        for e in range(epoch):
+            self._model.train()
+
+            for x, target in data_loader:
+                optimizer.zero_grad()
+
+                pred = self._model(x)
+                loss = criterion(pred, target)
+                loss.backward()
+                optimizer.step()
+
+            if verbose:
+                print("Epoch: {}, loss={:.3f}, train_accuracy={:.3f}, test_accuracy={:.3f}".format(
+                    e, loss, self.evaluate('train'), self.evaluate('test')))
+
+        if save_result:
+            self._train_accuracy = float(self.evaluate('train'))
+            self._test_accuracy = float(self.evaluate('test'))
+            self._dir_manager.update_model_meta(train_accuracy=self._train_accuracy,
+                                                test_accuracy=self._test_accuracy)
+
+    def evaluate(self, dataset='test', metric='accuracy', batch_size=128):
+        """Evaluate the model from either the training dataset or testing dataset 
+        with the given metrics."""
+        if dataset == 'test':
+            data_loader = DataLoader(
+                dataset=sel
