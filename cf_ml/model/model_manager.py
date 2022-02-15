@@ -110,4 +110,39 @@ class PytorchModelManager(ModelManager):
         self._model.load_state_dict(self._dir_manager.load_pytorch_model_state())
 
     def forward(self, x):
-  
+        """Get the forward results to the given data."""
+        self._model.eval()
+        return self._model(x)
+
+    def report(self, x, y=None, preprocess=True):
+        """Generate the report from the feature values and target values (optional). 
+        The report includes (features, target, prediction)."""
+        if preprocess:
+            x = self._dataset.preprocess_X(x)
+            if y is not None:
+                y = self._dataset.preprocess_y(y)
+
+        if isinstance(x, pd.DataFrame):
+            x = x[self._features].values
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x).float()
+
+        pred = self.forward(x).detach().numpy()
+        if y is None:
+            y = np.zeros(pred.shape)
+
+        report_df = self._dataset.inverse_preprocess(np.concatenate((x, y), axis=1))
+        report_df[self._prediction] = self._dataset.inverse_preprocess_y(pred)
+
+        return report_df
+
+    def report_on_instance(self, index):
+        """Generate the report to an instance in the dataset. 
+        The report includes (features, target, prediction)."""
+        instances = self._dataset.get_subset(index=index, preprocess=False)
+        report_df = self.report(instances[self._dataset.features], instances[self._dataset.target])
+        report_df[self._dataset.features] = instances[self._dataset.features]
+        report_df[self._dataset.target] = instances[self._dataset.target]
+        return report_df.set_index(instances.index)
+
+    # TODO: remove this
