@@ -227,4 +227,13 @@ class PytorchModelManager(ModelManager):
         return self._dataset
 
     @property
-    def tr
+    def train_accuracy(self):
+        return self._train_accuracy
+
+    @property
+    def test_accuracy(self):
+        return self._test_accuracy
+
+    @property
+    def dir_manager(self):
+        return self._dir_manager
