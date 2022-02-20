@@ -180,4 +180,51 @@ class PytorchModelManager(ModelManager):
         with the given metrics."""
         if dataset == 'test':
             data_loader = DataLoader(
-                dataset=sel
+                dataset=self.test_dataset, batch_size=batch_size, shuffle=True)
+        elif dataset == 'train':
+            data_loader = DataLoader(
+                dataset=self.train_dataset, batch_size=batch_size, shuffle=True)
+        else:
+            raise ValueError("{} should be either 'train' or 'test'".format(dataset))
+
+        target_class = np.array([])
+        pred_class = np.array([])
+
+        self._model.eval()
+
+        for x, target in data_loader:
+            pred = self._model(x)
+            pred = pred.argmax(axis=1).numpy()
+            target = target.argmax(axis=1).numpy()
+            target_class = np.concatenate((target_class, target))
+            pred_class = np.concatenate((pred_class, pred))
+
+        if metric == 'accuracy':
+            return (target_class == pred_class).mean()
+        else:
+            raise NotImplementedError
+
+    def save_model(self):
+        """Save the model states."""
+        self._dir_manager.init_dir()
+        self._dir_manager.save_pytorch_model_state(self._model.state_dict())
+
+    def save_reports(self):
+        """a tmp implemetation"""
+        self.dir_manager.save_prediction(
+            self.report_on_instance('all'), 'dataset')
+        self.dir_manager.save_prediction(
+            self.report_on_instance('train'), 'train_dataset')
+        self.dir_manager.save_prediction(
+            self.report_on_instance('test'), 'test_dataset')
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def dataset(self):
+        return self._dataset
+
+    @property
+    def tr
