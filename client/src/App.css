@@ -16,4 +16,76 @@
 
 .App-header {
     background-color: #282c34;
-    
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.App-link {
+    color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.main-container {
+    display: inline-flex;
+    float: left;
+}
+
+.instance-view-container {
+    width: 20vw;
+    height: 90vh;
+    margin-right: 5px;
+    overflow: hidden;
+}
+
+.table-view-container {
+    position: relative;
+    width: 75vw;
+    height: 90vh;
+    overflow: hidden;
+}
+
+.ant-card-head-title-text {
+    font: 18px;
+    font-weight: bold;
+    float: left;
+    line-height: 30px;
+}
+
+.ant-card-head-title {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    min-height: 30px;
+}
+
+.ant-card-head {
+    background-color: #e8f0fa;
+    height: 30px;
+    min-height: 30px;
+    /* width: 100%; */
+    padding-left: 10px;
+    text-align: center;
+}
+
+.ant-card-body {
+    padding-left: 10px;
+    padding-top: 10px;
+    height: 100%;
+    overflow: scroll;
+}
+
+.panel-wrapper {
+    min-width: 100px;
+}
