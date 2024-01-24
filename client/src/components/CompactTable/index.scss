@@ -47,4 +47,71 @@
     }
     .left-handle-base,
     .right-handle-base {
-        pointer-events: none
+        pointer-events: none;
+    }
+    .handle-line {
+        stroke: #aaa;
+        stroke-width: 2px;
+        pointer-events: none;
+    }
+    .handle-text {
+        font-size: 10px;
+        pointer-events: none;
+    }
+    .handle-icon {
+        fill: #aaa;
+        pointer-events: none;
+    }
+    path.link {
+        // stroke: black;
+        fill: none;
+    }
+    circle.hint-outer {
+        fill: none;
+        stroke: red;
+        opacity: 0.8;
+        stroke-width: 1px;
+    }
+    circle.hint-inner {
+        fill: red;
+        opacity: 0.8;
+    }
+    div.selected-column {
+        // border-color: red;
+        // border-style: solid;
+        box-shadow: inset 0px 0px 1px 1px #f00;
+    }
+    .histogram {
+        svg {
+            margin-bottom: 0;
+            cursor: crosshair;
+            vertical-align: top;
+            rect {
+                /* fill: rgb(109, 160, 202); */
+                opacity: 0.7;
+            }
+            .base rect {
+                /* fill: rgb(109, 160, 202); */
+                fill: #aaa;
+                opacity: 0.5;
+            }
+            rect.shade {
+                fill: #aaa;
+                opacity: 0;
+                &:hover {
+                    opacity: 0.4;
+                }
+            }
+            rect.shade.show {
+                opacity: 0.4;
+            }
+            rect.selector-sheet {
+                // fill: black;
+                opacity: 0;
+            }
+            rect.selector {
+                fill: black;
+                opacity: 0.2;
+                pointer-events: none;
+            }
+  
