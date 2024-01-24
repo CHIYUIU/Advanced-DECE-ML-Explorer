@@ -248,3 +248,13 @@ div.cell-content {
 }
 
 div.cell-content-container {
+    height: 100%;
+    width: 100%;
+    float: left;
+}
+
+.cell-triangle {
+    margin-left: 3px;
+    padding-top: 1px;
+    opacity: 0.8;
+}
