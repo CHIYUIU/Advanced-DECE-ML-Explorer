@@ -2,54 +2,56 @@
 import * as d3 from 'd3';
 import * as React from 'react';
 import * as _ from "lodash";
+import memoizeOne from "memoize-one";
 
-import { IMargin, defaultCategoricalColor, getChildOrAppend, getScaleBand } from '../visualization/common';
+
+import { IMargin, defaultCategoricalColor, getChildOrAppend, defaultMarginBottom, defaultMarginRight } from '../visualization/common';
+import Histogram, { drawGroupedHistogram, getNBinsRange } from '../visualization/Histogram';
 import { getRowLabels, FeatureColumnProps, SankeyBins } from './common';
 import { gini } from 'common/science';
 import { Icon } from 'antd';
 import { drawLink } from '../visualization/link'
-import { CatTableColumn } from 'components/Table';
-import { drawBarChart } from 'components/visualization/Barchart';
+import { columnMargin, NumTableColumn, CatTableColumn, TableColumn } from 'components/Table';
 
-export interface CatFeatColProps extends FeatureColumnProps {
-    column: CatTableColumn;
-    CFColumn: CatTableColumn;
-    protoColumn?: CatTableColumn;
+export interface NumFeatColProps extends FeatureColumnProps {
+    column: NumTableColumn;
+    CFColumn: NumTableColumn;
+    protoColumn?: NumTableColumn;
 
     histogramType: 'side-by-side' | 'stacked';
     drawAxis?: boolean;
 }
 
-export interface CatHeaderFeatColProps extends CatFeatColProps {
-    allColumn: CatTableColumn;
-    allCFColumn: CatTableColumn;
+export interface NumHeaderFeatColProps extends NumFeatColProps {
+    allColumn: NumTableColumn;
+    allCFColumn: NumTableColumn;
     allLabelColumn: Readonly<CatTableColumn>;
 
-    onUpdateFilter?: (categories?: string[]) => void;
-    onUpdateCFFilter?: (categories?: string[]) => void;
+    onUpdateFilter?: (extent?: [number, number]) => void;
+    onUpdateCFFilter?: (extent?: [number, number]) => void;
 }
 
-export interface CatSubsetFeatColProps extends CatFeatColProps {
-    selectedCategories: Readonly<string[]>;
-    onUpdateSelectedCategories?: (categories?: string[]) => void;
+export interface NumSubsetFeatColProps extends NumFeatColProps {
+    selectedRange: [number, number];
+    onUpdateSelectedRange?: (extent?: [number, number]) => void;
 
     selected: boolean;
     onSelect?: () => void;
 }
 
-export interface CatFeatColState { }
+export interface NumFeatColState { }
 
-export interface CatHeaderFeatColState extends CatFeatColState { }
+export interface NumHeaderFeatColState extends NumFeatColState { }
 
-export interface CatSubsetFeatColState extends CatFeatColState {
-    selectedCategories?: string[];
+export interface NumSubsetFeatColState extends NumFeatColState {
+    selectedRange?: [number, number];
     drawSankey: boolean;
     drawTooltip: boolean;
 }
 
-export class CatFeatCol<P extends CatFeatColProps, V extends CatFeatColState> extends React.PureComponent<P, V> {
-    protected originData?: string[][];
-    protected cfData?: string[][];
+export class NumFeatCol<P extends NumFeatColProps, V extends NumFeatColState> extends React.PureComponent<P, V> {
+    protected originData?: number[][];
+    protected cfData?: number[][];
     protected svgRef: React.RefObject<SVGSVGElement> = React.createRef();
     protected shouldPaint: boolean;
 
@@ -118,15 +120,22 @@ export class CatFeatCol<P extends CatFeatColProps, V extends CatFeatColState> ex
             .attr("transform", `translate(0, 0)`);
         const originHistNode = originHistBase.node();
         if (originHistNode && this.originData) {
-            drawBarChart({
-                svg: originHistNode,
+            drawGroupedHistogram({
+                root: originHistNode,
                 data: this.originData,
                 options: {
                     width,
                     margin,
                     height: histHeight,
+                    mode: histogramType,
+                    rangeSelector: 'bin-wise',
+                    drawBand: true,
+                    key: `${key}-${column.name}-origin`,
                     xScale: this.getXScale(),
+                    ticks: this.getTicks(),
+                    snapping: true,
                     drawAxis: drawAxis,
+                    twisty: 0,
                     color: color
                 }
             });
@@ -135,17 +144,20 @@ export class CatFeatCol<P extends CatFeatColProps, V extends CatFeatColState> ex
             .attr("transform", `translate(0, ${histHeight + 3})`);
         const cfHistNode = cfHistBase.node();
         if (cfHistNode && this.cfData)
-            drawBarChart({
-                svg: cfHistNode,
+            drawGroupedHistogram({
+                root: cfHistNode,
                 data: this.cfData,
                 options: {
                     width,
                     margin,
                     height: histHeight,
+                    mode: histogramType,
                     direction: 'down',
+                    color: i => color!(i ^ 1),
+                    key: `${column.name}-cf`,
                     xScale: this.getXScale(),
-                    drawAxis: drawAxis,
-                    color: i => color!(i ^ 1)
+                    ticks: this.getTicks(),
+                    snapping: true,
                 }
             });
 
@@ -153,20 +165,39 @@ export class CatFeatCol<P extends CatFeatColProps, V extends CatFeatColState> ex
     }
 
     getXScale() {
-        const { protoColumn, column, width, margin } = this.props;
-        if (protoColumn) {
-            return protoColumn.xScale || getScaleBand(0, width - margin.left - margin.right, column.series.toArray(), column.categories);
-        }
-        else {
-            return column.xScale || getScaleBand(0, width - margin.left - margin.right, column.series.toArray(), column.categories);
-        }
+        const { column, width, margin } = this.props;
+        return column.xScale || d3.scaleLinear()
+            .domain(column.extent)
+            .range([0, width - margin.left - margin.right]);
     }
 
+    getYScale() {
+        const { margin, histHeight } = this.props
+        const ticks = this.getTicks();
+        const x = this.getXScale();
+        const histogram = d3
+            .histogram()
+            .domain(x.domain() as [number, number])
+            .thresholds(ticks);
+        const bins = this.originData?.map(d => histogram(d));
+        if (bins) {
+            const ymax = d3.max(_.flatten(bins).map(d => d.length));
+            if (ymax)
+                return d3.scaleLinear()
+                    .domain([0, ymax])
+                    .range([0, histHeight - margin.top - margin.bottom]);
+        }
+    }
 
     getTicks() {
-        const { column } = this.props;
-        return column.categories;
+        const { protoColumn, column, width, histogramType } = this.props;
+        const dmcData = protoColumn ? protoColumn.series.toArray() : this.originData;
+        const [min, max] = (histogramType === 'side-by-side' && this.originData!.length > 1) ? getNBinsRange(width, 10, 16) : getNBinsRange(width, 7, 9);
+        const tickNum = Math.min(max, Math.max(min, d3.thresholdSturges(_.flatten(dmcData))))
+        const ticks = this.getXScale().ticks(tickNum);
+        return ticks;
     }
+
 
     public render() {
         const { column, className, style, width, histHeight, margin } = this.props;
@@ -174,7 +205,7 @@ export class CatFeatCol<P extends CatFeatColProps, V extends CatFeatColState> ex
 
         return <div className={className} style={{ width, ...style }} >
             <div className={(className || "") + " histogram"} style={style}>
-                <svg style={{ height: CatFeatCol.getHeight(histHeight), width: width }} ref={this.svgRef}>
+                <svg style={{ height: NumFeatCol.getHeight(histHeight), width: width }} ref={this.svgRef}>
                 </svg>
             </div>
         </div>
@@ -204,26 +235,26 @@ export class CatFeatCol<P extends CatFeatColProps, V extends CatFeatColState> ex
 
 }
 
-export class CatHeaderFeatCol extends CatFeatCol<CatHeaderFeatColProps, CatHeaderFeatColState> {
+export class NumHeaderFeatCol extends NumFeatCol<NumHeaderFeatColProps, NumHeaderFeatColState> {
     static layout = { axisHeight: 25 };
 
-    private allOriginData?: string[][];
-    private allCfData?: string[][];
+    private allOriginData?: number[][];
+    private allCfData?: number[][];
 
-    constructor(props: CatHeaderFeatColProps) {
+    constructor(props: NumHeaderFeatColProps) {
         super(props);
-        this.onSelectCategories = this.onSelectCategories.bind(this);
-        this.onSelectCFCategories = this.onSelectCFCategories.bind(this);
+        this.onSelectRange = this.onSelectRange.bind(this);
+        this.onSelectCFRange = this.onSelectCFRange.bind(this);
         this.updateParams(props);
 
         this.shouldPaint = false;
     }
 
     static getHeight(histHeight: number) {
-        return histHeight * 2 + 3 + CatHeaderFeatCol.layout.axisHeight;
+        return histHeight * 2 + 3 + NumHeaderFeatCol.layout.axisHeight;
     }
 
-    protected updateParams(props: CatHeaderFeatColProps) {
+    protected updateParams(props: NumHeaderFeatColProps) {
         const { column, CFColumn, allColumn, allCFColumn, labelColumn, allLabelColumn, focusedCategory, validFilter } = this.props;
 
 
@@ -262,20 +293,27 @@ export class CatHeaderFeatCol extends CatFeatCol<CatHeaderFeatColProps, CatHeade
         const originHistBase = getChildOrAppend<SVGGElement, SVGSVGElement>(root, "g", "origin-hist-base");
         const originHistNode = originHistBase.node();
         if (originHistNode && this.originData) {
-            drawBarChart({
-                svg: originHistNode,
+            drawGroupedHistogram({
+                root: originHistNode,
                 data: this.originData,
                 allData: this.allOriginData,
+                // this.props.protoColumn && this.props.protoColumn.series.toArray(),
                 options: {
                     width,
                     margin,
                     height: histHeight,
+                    mode: histogramType,
+                    // onHoverRange: this.onHoverRange,
+                    onSelectRange: this.onSelectRange,
+                    rangeSelector: 'bin-wise',
+                    selectedRange: column.filter,
+                    drawBand: true,
+                    key: `${key}-${column.name}-origin`,
                     xScale: this.getXScale(),
+                    ticks: this.getTicks(),
+                    snapping: true,
                     drawAxis: drawAxis,
-                    renderShades: true,
-                    color: color,
-                    onSelectCategories: this.onSelectCategories,
-                    selectedCategories: column.filter,
+                    color: color
                 }
             });
 
@@ -285,21 +323,25 @@ export class CatHeaderFeatCol extends CatFeatCol<CatHeaderFeatColProps, CatHeade
             .attr("transform", `translate(0, ${histHeight + 3})`);
         const cfHistNode = cfHistBase.node();
         if (cfHistNode && this.cfData)
-            drawBarChart({
-                svg: cfHistNode,
+            drawGroupedHistogram({
+                root: cfHistNode,
                 data: this.cfData,
                 allData: this.allCfData,
+                // this.props.protoColumn && this.props.protoColumn.series.toArray(),
                 options: {
                     width,
                     margin,
                     height: histHeight,
+                    mode: histogramType,
+                    direction: 'down',
+                    color: i => color(i ^ 1),
+                    key: `${column.name}-cf`,
                     xScale: this.getXScale(),
-                    drawAxis: drawAxis,
-                    direction: "down",
-                    renderShades: true,
-                    color: i => color(i^1),
-                    onSelectCategories: this.onSelectCFCategories,
-                    selectedCategories: CFColumn.filter,
+                    ticks: this.getTicks(),
+                    snapping: true,
+                    onSelectRange: this.onSelectCFRange,
+                    rangeSelector: this.props.onUpdateCFFilter ? "bin-wise" : undefined,
+                    selectedRange: CFColumn.filter,
                 }
             });
 
@@ -317,66 +359,68 @@ export class CatHeaderFeatCol extends CatFeatCol<CatHeaderFeatColProps, CatHeade
 
         return <div className={className} style={{ width, ...style }} >
             <div className={(className || "") + " histogram"} style={style}>
-                <svg style={{ height: CatHeaderFeatCol.getHeight(histHeight), width: width }} ref={this.svgRef}>
+                <svg style={{ height: NumHeaderFeatCol.getHeight(histHeight), width: width }} ref={this.svgRef}>
                 </svg>
             </div>
         </div>
 
     }
 
-    onSelectCategories(categories?: string[]) {
+    onSelectRange(hoveredBin?: [number, number]) {
         const { onUpdateFilter } = this.props;
-        onUpdateFilter && onUpdateFilter(categories);
-        this.setState({ selectedCategories: categories && [...categories] });
-    }
+        const bin = this._checkBins(hoveredBin);
+        onUpdateFilter && onUpdateFilter(bin);
+    };
 
-    onSelectCFCategories(categories?: string[]) {
+    onSelectCFRange(hoveredBin?: [number, number]) {
         const { onUpdateCFFilter } = this.props;
-        onUpdateCFFilter && onUpdateCFFilter(categories);
-        this.setState({ selectedCFCategories: categories && [...categories] });
-    }
+        const bin = this._checkBins(hoveredBin);
+        onUpdateCFFilter && onUpdateCFFilter(bin);
+    };
 }
 
-export class CatSubsetFeatCol extends CatFeatCol<CatSubsetFeatColProps, CatSubsetFeatColState> {
+export class NumSubsetFeatCol extends NumFeatCol<NumSubsetFeatColProps, NumSubsetFeatColState> {
     static layout = { handleAnn: 20, lineHeight: 10, innerMarginBottom: 10, sankeyHeight: 20 };
 
-    private allOriginData?: string[][];
-    private allCfData?: string[][];
-    protected sankeyBins?: SankeyBins<string>[][][];
+    private allOriginData?: number[][];
+    private allCfData?: number[][];
+    protected sankeyBins?: SankeyBins<number>[][][];
 
     static getHeight(histHeight: number) {
-        const { handleAnn, lineHeight, innerMarginBottom } = CatSubsetFeatCol.layout
+        const { handleAnn, lineHeight, innerMarginBottom } = NumSubsetFeatCol.layout
         return histHeight * 2 + 3 + handleAnn + lineHeight + innerMarginBottom;
     }
 
-    constructor(props: CatSubsetFeatColProps) {
+    constructor(props: NumSubsetFeatColProps) {
         super(props);
 
-        const { selectedCategories } = this.props;
-        this.state = { drawSankey: false, drawTooltip: false, selectedCategories: [...selectedCategories] };
+        const { selectedRange } = this.props;
+        this.state = { drawSankey: false, drawTooltip: false, selectedRange };
         this.updateParams(props);
 
+        this.onHoverRange = this.onHoverRange.bind(this);
+        this.onSelectRange = this.onSelectRange.bind(this);
+        this.drawLineChart = this.drawLineChart.bind(this);
         this.drawHandle = this.drawHandle.bind(this);
+        this.getGini = this.getGini.bind(this);
         this.getSankeyBins = this.getSankeyBins.bind(this);
         this.onSwitchLink = this.onSwitchLink.bind(this);
         this.onHover = this.onHover.bind(this);
         this.onMouseLeave = this.onMouseLeave.bind(this);
-        this.twisty = this.twisty.bind(this);
-        this.onSelectCategories = this.onSelectCategories.bind(this);
 
         this.shouldPaint = false;
     }
 
-    public componentWillReceiveProps(nextProps: CatSubsetFeatColProps){
+    public componentWillReceiveProps(nextProps: NumSubsetFeatColProps){
         // new props
         if (nextProps != this.props) {
-            const { selectedCategories } = nextProps;
-            this.setState({ drawSankey: false, drawTooltip: false, selectedCategories: [...selectedCategories] });
+            const { selectedRange } = nextProps;
+            this.setState({ drawSankey: false, drawTooltip: false, selectedRange });
             this.updateParams(this.props);
         }
     }
 
-    protected updateParams(props: CatSubsetFeatColProps) {
+    protected updateParams(props: NumSubsetFeatColProps) {
         const { column, CFColumn, labelColumn, focusedCategory, validFilter } = props;
 
 
@@ -406,7 +450,6 @@ export class CatSubsetFeatCol extends CatFeatCol<CatSubsetFeatColProps, CatSubse
 
     getSankeyBins() {
         const { column, CFColumn, labelColumn: groupByColumn, focusedCategory } = this.props;
-        const x = this.getXScale();
         const ticks = this.getTicks();
 
         const originData = column.series.toArray();
@@ -415,9 +458,9 @@ export class CatSubsetFeatCol extends CatFeatCol<CatSubsetFeatColProps, CatSubse
         const labelArray: any[] | undefined = groupByColumn?.series.toArray();
         if (cfData) {
             if (groupByColumn && labelArray) {
-                const bins: SankeyBins<string>[][][] = groupByColumn.categories!.map((d, i) =>
-                    _.range(ticks.length).map((d, topIndex) =>
-                        _.range(ticks.length).map((d, bottomIndex) => ({
+                const bins: SankeyBins<number>[][][] = groupByColumn.categories!.map((d, i) =>
+                    _.range(ticks.length - 1).map((d, topIndex) =>
+                        _.range(ticks.length - 1).map((d, bottomIndex) => ({
                             x00: ticks[topIndex],
                             x01: ticks[topIndex + 1],
                             x10: ticks[bottomIndex],
@@ -428,34 +471,34 @@ export class CatSubsetFeatCol extends CatFeatCol<CatSubsetFeatColProps, CatSubse
                 _.range(originData.length).forEach((d, i) => {
                     if (!validArray[i]) return;
                     const catIndex = groupByColumn.categories!.indexOf(labelArray[i]);
-                    const topBinIndex = ticks.indexOf(originData[i]);
-                    const bottomBinIndex = ticks.indexOf(cfData[i]);
-                    bins[catIndex][Math.max(topBinIndex, 0)][Math.max(bottomBinIndex, 0)].count += 1;
+                    const topBinIndex = ticks.indexOf(ticks.find(tick => tick >= originData[i])!);
+                    const bottomBinIndex = ticks.indexOf(ticks.find(tick => tick >= cfData[i])!);
+                    bins[catIndex][Math.max(topBinIndex - 1, 0)][Math.max(bottomBinIndex - 1, 0)].count += 1;
                 });
                 bins.forEach((binMat, i) => {
-                    _.range(ticks.length).forEach(topIndex => {
+                    _.range(ticks.length - 1).forEach(topIndex => {
                         let topBinCount = 0;
-                        _.range(ticks.length).forEach(bottomIndex => {
+                        _.range(ticks.length - 1).forEach(bottomIndex => {
                             binMat[topIndex][bottomIndex].topPrevCounts = topBinCount;
                             topBinCount += binMat[topIndex][bottomIndex].count;
                         })
-                        _.range(ticks.length).forEach(bottomIndex => {
+                        _.range(ticks.length - 1).forEach(bottomIndex => {
                             binMat[topIndex][bottomIndex].topTotalCounts = topBinCount;
                         })
                     });
-                    _.range(ticks.length).forEach(bottomIndex => {
+                    _.range(ticks.length - 1).forEach(bottomIndex => {
                         let bottomBinCount = 0;
-                        _.range(ticks.length).forEach(topIndex => {
+                        _.range(ticks.length - 1).forEach(topIndex => {
                             binMat[topIndex][bottomIndex].topPrevCounts = bottomBinCount;
                             bottomBinCount += binMat[topIndex][bottomIndex].count;
                         })
-                        _.range(ticks.length).forEach(topIndex => {
+                        _.range(ticks.length - 1).forEach(topIndex => {
                             binMat[topIndex][bottomIndex].bottomTotalCounts = bottomBinCount;
                         })
                     });
                 })
 
-                _.range(ticks.length).forEach(topIndex => _.range(ticks.length).forEach(bottomIndex => {
+                _.range(ticks.length - 1).forEach(topIndex => _.range(ticks.length - 1).forEach(bottomIndex => {
                     let catTopTotalCount = 0;
                     let catBottomTotalCount = 0;
                     _.range(groupByColumn.categories!.length).forEach((catIndex) => {
@@ -475,20 +518,18 @@ export class CatSubsetFeatCol extends CatFeatCol<CatSubsetFeatColProps, CatSubse
         return undefined
     }
 
-    public twisty(idx: number) {
-        const { labelColumn: groupByColumn, column } = this.props;
-        if (groupByColumn && this.originData && this.cfData) {
-            const cat = column.categories[idx];
-            const pos = (this.originData[0] ? this.originData[0].filter(d => d === cat).length : 0) + (this.cfData[1] ? this.cfData[1].filter(d => d === cat).length : 0);
-            const neg = (this.originData[1] ? this.originData[1].filter(d => d === cat).length : 0) + (this.cfData[0] ? this.cfData[0].filter(d => d === cat).length : 0);
-            const sum = pos + neg;
-            if (sum > 0) {
-                return (1 - (pos / sum) ** 2 - (neg / sum) ** 2);
-            }
-            else
-                return 0
+    get impurity() {
+        const { selectedRange: range } = this.state;
+        if (this.originData && this.cfData && range) {
+            const posNum = (this.originData[0] ? this.originData[0].length : 0) 
+                + (this.cfData[1] ? this.cfData[1].filter(d => (d >= range[0] && d < range[1])).length : 0);
+            const negNum = (this.originData[1] ? this.originData[1].length : 0) 
+                + (this.cfData[0] ? this.cfData[0].filter(d => (d >= range[0] && d < range[1])).length : 0);
+            const totalCount = posNum + negNum;
+            return 1 - (posNum / totalCount) ** 2 - (negNum / totalCount) ** 2;
         }
         else {
+            console.debug(this.originData, this.cfData, range);
             return 0;
         }
     }
@@ -499,7 +540,7 @@ export class CatSubsetFeatCol extends CatFeatCol<CatSubsetFeatColProps, CatSubse
 
         return <div className={className} style={{ width, ...style }} onMouseOver={this.onHover} onMouseLeave={this.onMouseLeave}>
             <div className={(className || "") + " histogram" + (selected ? " selected-column" : "")} style={style}>
-                <svg style={{ height: CatSubsetFeatCol.getHeight(histHeight), width: width }} ref={this.svgRef}>
+                <svg style={{ height: NumSubsetFeatCol.getHeight(histHeight), width: width }} ref={this.svgRef}>
                 </svg>
             </div>
             {drawTooltip &&
@@ -509,8 +550,9 @@ export class CatSubsetFeatCol extends CatFeatCol<CatSubsetFeatColProps, CatSubse
 
     paint() {
         const { width, histHeight, margin, histogramType, column, k: key, drawAxis } = this.props;
-        const { drawSankey, selectedCategories } = this.state
-        const { handleAnn, sankeyHeight } = CatSubsetFeatCol.layout;
+        const { drawSankey } = this.state
+        const { handleAnn, sankeyHeight } = NumSubsetFeatCol.layout;
+        // const { rangeNotation, lineChart, marginBottom } = SubsetCFHist.subsetLayout;
         const node = this.svgRef.current;
         const color = this.props.color || defaultCategoricalColor;
         if (!node) {
@@ -522,24 +564,31 @@ export class CatSubsetFeatCol extends CatFeatCol<CatSubsetFeatColProps, CatSubse
             .attr("transform", `translate(0, ${handleAnn})`);;
         const originHistNode = originHistBase.node();
         if (originHistNode && this.originData && this.allOriginData) {
-            drawBarChart({
-                svg: originHistNode,
+            drawGroupedHistogram({
+                root: originHistNode,
                 data: this.originData,
                 allData: this.allOriginData,
+                dmcData: this.allOriginData,
                 options: {
                     width,
                     margin,
                     height: histHeight,
+                    mode: histogramType,
+                    onHoverRange: this.onHoverRange,
+                    onSelectRange: this.onSelectRange,
+                    rangeSelector: "as-a-whole",
+                    selectedRange: this.props.selectedRange,
+                    drawBand: true,
+                    bandValueFn: this.getGini,
+                    key: `${key}-${column.name}-origin`,
                     xScale: this.getXScale(),
+                    ticks: this.getTicks(),
+                    snapping: true,
                     drawAxis: drawAxis,
-                    renderShades: true,
-                    color: color,
-                    twisty: this.twisty,
-                    selectedCategories: selectedCategories,
-                    onSelectCategories: this.onSelectCategories,
+                    twisty: this.impurity,
+                    color: color
                 }
             });
-
 
         }
         this.drawHandle(node);
@@ -554,97 +603,112 @@ export class CatSubsetFeatCol extends CatFeatCol<CatSubsetFeatColProps, CatSubse
             .attr("transform", `translate(0, ${histHeight + handleAnn + (drawSankey ? sankeyHeight : 3)})`);
         const cfHistNode = cfHistBase.node();
         if (cfHistNode && this.cfData && this.allCfData)
-            drawBarChart({
-                svg: cfHistNode,
+            drawGroupedHistogram({
+                root: cfHistNode,
                 data: this.cfData,
                 allData: this.allCfData,
+                dmcData: this.allCfData,
                 options: {
                     width,
                     margin,
                     height: histHeight,
+                    mode: histogramType,
+                    direction: 'down',
+                    color: i => color(i ^ 1),
+                    key: `${column.name}-cf`,
                     xScale: this.getXScale(),
-                    drawAxis: drawAxis,
-                    direction: "down",
-                    color: i => color(i^1),
+                    ticks: this.getTicks(),
+                    snapping: true,
                 }
             });
 
         const lineChartBase = getChildOrAppend<SVGGElement, SVGSVGElement>(root, "g", "line-chart-base")
             .attr("transform", `translate(${margin.left}, ${histHeight * 2 + handleAnn + (drawSankey ? sankeyHeight : 3)})`);
         const lineChartNode = lineChartBase.node()
+        if (lineChartNode) {
+            this.drawLineChart(lineChartNode);
+        }
 
         this.shouldPaint = false;
     }
 
+    drawLineChart(root: SVGGElement) {
+        const { width, margin, column, k: key } = this.props;
+        // const lineChartBase = getChildOrAppend<SVGGElement, SVGSVGElement>(_root, "g", "line-chart-base")
+        //     .attr("transform", `translate(${margin.left}, ${histHeight * 2})`);
+        const lineChartBase = d3.select(root);
+        const _width = width - margin.left - margin.right
+        const x = this.getXScale();
+        const y = d3.scaleLinear()
+            .domain([0, 0.5])
+            .range([0, 10]);
+        const line = d3.line()
+            .x(d => x(d[0]))
+            .y(d => y(d[1]))
+            .curve(d3.curveMonotoneX);
+        const data: [number, number][] = _.range(0, _width, 5).map(d => x.invert(d)).map(x => [x, this.getGini(x)]);
+        const svgDefs = getChildOrAppend(lineChartBase, 'defs', 'color-defs');
+        const colorGradient = getChildOrAppend(svgDefs, 'linearGradient', 'color-gradient')
+            .attr('id', `gini-gradient-${key}`)
+
+        colorGradient.selectAll("stop")
+            .data(data)
+            .join<SVGStopElement>(enter => {
+                return enter.append("stop")
+                    .attr("class", "color-stops")
+            })
+            .attr("offset", d => (d[0] - x.domain()[0]) / (x.domain()[1] - x.domain()[0] + 0.000001))
+            .attr("stop-color", d => d3.interpolateGreens(1 - d[1] * 2))
+
+        getChildOrAppend(lineChartBase, "path", "line")
+            .datum(data)
+            .attr("d", line)
+            .style("stroke", `url(#gini-gradient-${key})`);
+    }
 
     drawHandle(root: SVGSVGElement) {
-        const { margin, histHeight } = this.props;
-        const { selectedCategories } = this.state;
-        const { handleAnn } = CatSubsetFeatCol.layout;
+        const { margin, histHeight, column } = this.props;
+        const { selectedRange } = this.state;
+        const { handleAnn } = NumSubsetFeatCol.layout;
         const _root = d3.select(root);
         const x = this.getXScale();
-        if (selectedCategories !== undefined) {
-            const handleBase = _root.selectAll("g.handle-base")
-                .data(selectedCategories)
-                .join(enter => enter.append("g")
-                    .attr("class", "handle-base"),
-                    update => update,
-                    exit => { exit.remove() }
-                )
-                .attr("transform", d => `translate(${margin.left + x(d)!}, ${margin.top})`);
+        if (selectedRange) {
+            const leftHandleBase = getChildOrAppend(_root, 'g', 'right-hand-base')
+                .attr("transform", `translate(${margin.left + x(selectedRange[0])}, ${margin.top})`);
+            getChildOrAppend(leftHandleBase, 'line', 'handle-line')
+                .attr("x1", 0)
+                .attr("x2", 0)
+                .attr("y1", handleAnn)
+                .attr("y2", 2 * histHeight + 3);
 
-            getChildOrAppend(handleBase, "path", "handle-icon")
+            getChildOrAppend(leftHandleBase, 'path', 'handle-icon')
                 .attr("d", "M-3,0 L3,0 L0,5 z")
-                .attr("transform", `translate(${x.bandwidth() / 2}, ${handleAnn - 5})`);
+                .attr("transform", `translate(0, ${handleAnn - 5})`);;
+
+            getChildOrAppend(leftHandleBase, 'text', 'handle-text')
+                .text(selectedRange[0])
+                .attr("dy", 10)
+                .attr("dx", -2);
+
+            const rightHandleBase = getChildOrAppend(_root, 'g', 'left-hand-base')
+                .attr("transform", `translate(${margin.left + x(selectedRange[1])}, ${margin.top})`);
+            getChildOrAppend(rightHandleBase, 'line', 'handle-line')
+                .attr("x1", 0)
+                .attr("x2", 0)
+                .attr("y1", handleAnn)
+                .attr("y2", 2 * histHeight + 3);
+
+            getChildOrAppend(rightHandleBase, 'path', 'handle-icon')
+                .attr("d", "M-3,0 L3,0 L0,5 z")
+                .attr("transform", `translate(0, ${handleAnn - 5})`);;
+
+            getChildOrAppend(rightHandleBase, 'text', 'handle-text')
+                .text(selectedRange[1].toFixed(column.precision))
+                .attr("dy", 10)
+                .attr("dx", -5);
         }
     }
 
     drawSankey(root: SVGGElement) {
         const { width, margin, histogramType, focusedCategory } = this.props;
         const { drawSankey } = this.state;
-        if (this.sankeyBins)
-            drawLink(root, this.sankeyBins, {
-                height: CatSubsetFeatCol.layout.sankeyHeight,
-                width: width,
-                margin: margin,
-                histogramType: focusedCategory === undefined ? histogramType : 'stacked',
-                collapsed: !drawSankey,
-                xScale: x => this.getXScale()(x)!,
-                binWidth: this.binWidth,
-                onSwitch: this.onSwitchLink,
-                color: this.props.color,
-            })
-    }
-
-    get binWidth() {
-        const { width, margin, column, histogramType } = this.props;
-        // const groupWidth = (width - margin.left - margin.right) / (this.getTicks().length - 1) - 2;
-        const groupWidth = column.xScale!.bandwidth()
-        return histogramType === 'side-by-side' ? (groupWidth / this.originData!.length - 1) : groupWidth;
-    }
-
-    onHover() {
-        this.setState({ drawTooltip: true })
-    }
-
-    onMouseLeave() {
-        this.setState({ drawTooltip: false })
-    }
-
-    onSwitchLink() {
-        const { drawSankey } = this.state;
-        this.setState({ drawSankey: !drawSankey });
-    }
-
-    _groupByArgs(): undefined | [number[], number[]] {
-        const { labelColumn: groupByColumn } = this.props;
-        return groupByColumn && getRowLabels(groupByColumn);
-    }
-
-    onSelectCategories(categories?: string[]) {
-        const { onUpdateSelectedCategories } = this.props;
-        onUpdateSelectedCategories && onUpdateSelectedCategories(categories);
-        this.setState({ selectedCategories: categories && [...categories] });
-    }
-
-}
