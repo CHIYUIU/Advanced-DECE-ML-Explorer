@@ -1,0 +1,50 @@
+.corner-info {
+    position: absolute;
+    background-color: rgba(240, 240, 240, 0.5);
+    border-color: rgba(160, 160, 160, 0.5);
+    padding: 4px 6px;
+    bottom: -32px;
+    right: 0px;
+    font-size: 13px;
+}
+
+.compact-table .cell.col-index .cell-content {
+    background-color: rgba(240, 240, 240, 0.5);
+}
+
+.toolbox {
+    text-align: left;
+    height: 30px;
+}
+
+.compact-table {
+    height: calc(100% - 30px);
+}
+
+.header-chart {
+    .info {
+        line-height: 18px;
+        height: 18px;
+        font-size: 12px;
+        text-align: left;
+        margin-left: 6px;
+    }
+    div.header-chart {
+        margin-top: 5px;
+    }
+}
+
+.subset-chart {
+    .zoom-button {
+        position: absolute;
+        right: 0px;
+        top: 2px;
+    }
+    .line {
+        fill: none;
+        stroke: rgb(194, 40, 40);
+        stroke-width: 2px;
+    }
+    .left-handle-base,
+    .right-handle-base {
+        pointer-events: none

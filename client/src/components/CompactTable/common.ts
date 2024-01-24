@@ -47,4 +47,32 @@ export interface FeatureColumnProps {
   // height: number;
   histHeight: number;
   margin: IMargin;
-  style?:
+  style?: React.CSSProperties;
+  className?: string;
+  k: string;
+
+  column: TableColumn;
+  CFColumn: TableColumn;
+  validFilter: (id: number) => boolean;
+  protoColumn?: TableColumn;
+  labelColumn: Readonly<CatTableColumn>;
+
+  focusedCategory?: number;
+  color?: (x: number) => string;
+}
+
+export interface SankeyBins<T> {
+  x00: T,
+  x01: T,
+  x10: T,
+  x11: T,
+  count: number,
+  topTotalCounts?: number,
+  bottomTotalCounts?: number,
+  topPrevCounts?: number,
+  bottomPrevCounts?: number,
+  catTopTotalCount?: number,
+  catBottomTotalCount?: number,
+  value?: T[]
+}
+
