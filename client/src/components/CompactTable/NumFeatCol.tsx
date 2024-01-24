@@ -712,3 +712,97 @@ export class NumSubsetFeatCol extends NumFeatCol<NumSubsetFeatColProps, NumSubse
     drawSankey(root: SVGGElement) {
         const { width, margin, histogramType, focusedCategory } = this.props;
         const { drawSankey } = this.state;
+        if (this.sankeyBins)
+            drawLink(root, this.sankeyBins, {
+                height: NumSubsetFeatCol.layout.sankeyHeight,
+                width: width,
+                margin: margin,
+                histogramType: focusedCategory === undefined ? histogramType : 'stacked',
+                collapsed: !drawSankey,
+                xScale: this.getXScale(),
+                binWidth: this.binWidth,
+                onSwitch: this.onSwitchLink,
+                color: this.props.color,
+            })
+    }
+
+    get binWidth() {
+        const { width, margin, histogramType } = this.props;
+        const groupWidth = (width - margin.left - margin.right) / (this.getTicks().length - 1) - 2;
+        return histogramType === 'side-by-side' ? (groupWidth / this.originData!.length - 1) : groupWidth;
+    }
+
+    private getGini(x: number) {
+        const { labelColumn, column, CFColumn } = this.props;
+        const data = column.series.toArray();
+        const cf = CFColumn.series.toArray();
+        const validArray: boolean[] = _.range(data.length).map((d) => data[d] !== cf[d]);
+        const groupArgs = labelColumn && getRowLabels(labelColumn);
+        // const validFilter = column.selectedValid && ((idx: number) => column.selectedValid![idx]);
+
+        // const geqValidFilter = validFilter && ((idx: number) => idx >= x && validFilter(idx));
+        // const lessValidFilter = validFilter && ((idx: number) => idx < x && validFilter(idx));
+        if (groupArgs) {
+            const labels = groupArgs[0];
+            const geqData: number[][] = [];
+            const lessData: number[][] = [];
+            groupArgs[1].forEach(d => { geqData[d] = []; lessData[d] = [] });
+            data.forEach((d, i) => {
+                if (validArray[i]) {
+                    if (d >= x) geqData[labels[i]].push(d);
+                    else lessData[labels[i]].push(d);
+                }
+            })
+            cf && cf.forEach((d, i) => {
+                if (validArray[i]) {
+                    if (d >= x) geqData[labels[i] ^ 1].push(d);
+                    else lessData[labels[i] ^ 1].push(d);
+                }
+            })
+            const geqGini = gini(geqData);
+            const lessGini = gini(lessData);
+            const geqGroupCount = d3.sum(geqData.map(d => d.length));
+            const lessGroupCount = d3.sum(lessData.map(d => d.length));
+
+            const totalCount = (geqGroupCount + lessGroupCount);
+            const ret = geqGroupCount / totalCount * geqGini + lessGroupCount / totalCount * lessGini;
+            return ret;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    onHover() {
+        this.setState({ drawTooltip: true })
+    }
+
+    onMouseLeave() {
+        this.setState({ drawTooltip: false })
+    }
+
+    onSwitchLink() {
+        const { drawSankey } = this.state;
+        this.setState({ drawSankey: !drawSankey });
+    }
+
+    _groupByArgs(): undefined | [number[], number[]] {
+        const { labelColumn: groupByColumn } = this.props;
+        return groupByColumn && getRowLabels(groupByColumn);
+    }
+
+    onHoverRange(hoveredBin?: [number, number]) {
+        const bin = this._checkBins(hoveredBin);
+        this.setState({ selectedRange: bin && [bin[0], bin[1]] });
+        // onUpdateFilter && bin && onUpdateFilter([bin[0], bin[1]]);
+    };
+
+    onSelectRange(hoveredBin?: [number, number]) {
+        const { onUpdateSelectedRange } = this.props;
+        const bin = this._checkBins(hoveredBin);
+
+        this.setState({ selectedRange: bin && [bin[0], bin[1]] });
+        onUpdateSelectedRange && onUpdateSelectedRange(this.state.selectedRange);
+    };
+
+}
