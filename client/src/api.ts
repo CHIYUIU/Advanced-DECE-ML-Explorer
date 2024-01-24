@@ -63,4 +63,57 @@ export type Filter = {
 
 export interface CFResponse {
   index: number;
-  counterfactuals: C
+  counterfactuals: CounterFactual[];
+}
+
+export interface SubsetCFResponse {
+  index: number[];
+  counterfactuals: CounterFactual[][];
+}
+
+export interface QueryParams {
+  queryInstance: CounterFactual;
+  target?: number | string;
+  prototypeCf?: CounterFactual | null;
+  k?: number;
+  cfNum?: number;
+  attrFlex?: boolean[];
+  attrRange?: Filter[];
+}
+
+export async function getCF(params: {
+  dataId: string;
+  modelId: string;
+  index: number;
+}): Promise<CFResponse> {
+  const url = `${API}/cf`;
+  const response = await axios.get(url, { params });
+  const data = checkResponse(response, []);
+  return data;
+}
+
+export async function getSubsetCF(params: {filters: Filter[]
+}): Promise<SubsetCFResponse> {
+  const url = `${API}/r_counterfactuals`;
+  const response = await axios.post(url, { ...params });
+  const data = checkResponse(response, []);
+  return data;
+}
+
+export async function GetInstanceCF(
+  params: QueryParams
+): Promise<CounterFactual[]> {
+  const url = `${API}/counterfactuals`;
+  const response = await axios.post(url, params);
+  const data = checkResponse(response, []);
+  return data;
+}
+
+export async function predictInstance(
+  params: {queryInstance: CounterFactual}
+): Promise<string> {
+  const url = `${API}/predict`;
+  const response = await axios.post(url, params);
+  const data = checkResponse(response, []);
+  return data;
+}
