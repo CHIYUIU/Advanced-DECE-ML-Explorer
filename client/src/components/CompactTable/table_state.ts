@@ -126,4 +126,36 @@ function _expandRows(rows: RowState[], action: ExpandRows) {
     if (isExpandedRow(v)) return false; // skipping this one
     return startIndex < v.endIndex;
   });
-  co
+  const end = _.findLastIndex(rows, v => {
+    if (isExpandedRow(v)) return false; // skipping this one
+    return v.startIndex < endIndex;
+  });
+  if (start === -1 || end === -1) return rows; // nothing to expand
+
+  const startState = rows[start], endState = rows[end];
+  if (isExpandedRow(startState)) throw "This should not happen";
+  if (isExpandedRow(endState)) throw "This should not happen";
+  const replacedStates: RowState[] = [];
+  if (startState.startIndex < startIndex) {
+    replacedStates.push(...breakCollapsedRows({...startState, endIndex: startIndex}));
+  }
+  for (let index = startIndex; index < endIndex; index++) {
+    replacedStates.push({index, dataIndex: dataIndex[index - startIndex], state: RowStateType.EXPANDED});
+  }
+  if (endIndex < endState.endIndex) {
+    replacedStates.push(...breakCollapsedRows({...endState, startIndex: endIndex}));
+  }
+  return [...rows.slice(0, start), ...replacedStates, ...rows.slice(end + 1) ];
+
+  // return rows.splice(start, end - start + 1, ...replacedStates);
+}
+
+function _remapRows(rows: RowState[], action: ReorderRows | FilterRows): RowState[] {
+  const {index} = action;
+  const index2new: (number | undefined)[] = [];
+  // index.forEach((idx, i) => index2new[idx] = i);
+  _.range(index.length).forEach((idx, i) => index2new[idx] = i);
+
+  let expandedRows: ExpandedRow[] = rows.filter(r => isExpandedRow(r)) as ExpandedRow[];
+  // The expandedRows with updated index
+  expandedRows = expandedR
