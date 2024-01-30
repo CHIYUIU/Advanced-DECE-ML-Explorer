@@ -81,4 +81,49 @@ function breakCollapsedRows(row: CollapsedRows, maxStep: number = 200): Collapse
   const step = Math.ceil((endIndex - startIndex) / n);
   const rows: CollapsedRows[] = [];
   for (let i = 0; i < n; ++i) {
-    const start = startInd
+    const start = startIndex + step * i, end = Math.min(start + step, endIndex);
+    rows.push({startIndex: start, endIndex: end, state});
+  }
+  return rows;
+}
+
+function _collapseRows(rows: RowState[], action: CollapseRows) {
+  const {startIndex, endIndex} = action;
+  const start = rows.findIndex(v => {
+    if (isExpandedRow(v)) return startIndex === v.index;
+    return startIndex <= v.endIndex;
+  });
+  const end = _.findLastIndex(rows, v => {
+    if (isExpandedRow(v)) return endIndex === v.index + 1;
+    return v.startIndex <= endIndex;
+  });
+  if (start === -1 || end === -1) {
+    console.error("This should not happen", rows, action);
+  }
+  console.debug('collapse start', start, '. collapse end', end);
+  if (start === end) return rows;  // nothing to collapse;
+  let replacedState: CollapsedRows;
+  const startState = rows[start];
+  if (isExpandedRow(startState)) {
+    replacedState = {startIndex: startState.index, endIndex, state: RowStateType.COLLAPSED};
+  } else {
+    replacedState = {...startState, endIndex};
+  }
+
+  const endState = rows[end];
+  if (isExpandedRow(endState)) {
+    replacedState.endIndex = endState.index;
+  } else {
+    replacedState.endIndex = endState.endIndex;
+  }
+  
+  return [...rows.slice(0, start), ...breakCollapsedRows(replacedState), ...rows.slice(end + 1) ];
+}
+
+function _expandRows(rows: RowState[], action: ExpandRows) {
+  const {startIndex, endIndex, dataIndex} = action;
+  const start = rows.findIndex(v => {
+    if (isExpandedRow(v)) return false; // skipping this one
+    return startIndex < v.endIndex;
+  });
+  co
