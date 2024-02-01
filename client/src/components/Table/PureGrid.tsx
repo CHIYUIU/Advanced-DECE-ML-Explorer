@@ -48,4 +48,48 @@ export default class PureGrid extends React.PureComponent<IPureGridProps> {
 
         return (
             <div
-                classN
+                className={`grid-wrapper ${className}`}
+                style={{
+                    ...containerStyle,
+                    width: width,
+                    height: height
+                }}
+            >
+                <Grid
+                    cellRenderer={this.renderCell}
+                    className={`invisible-scrollbar`}
+                    height={height}
+                    ref={this.GridRef}
+                    tabIndex={null}
+                    width={width}
+                    style={style}
+                    {...rest}
+                />
+            </div>
+        );
+    }
+
+    renderCell(cellProps: GridCellProps) {
+        const { rowIndex, columnIndex, key, style} = cellProps;
+
+        const { cellRenderer } = this.props;
+        let result: React.ReactNode;
+        if (cellRenderer) {
+            result = cellRenderer(cellProps);
+        }
+        if (result === undefined) result = this.defaultCellRenderer();
+        return (
+            <div
+                className={`cell row-${rowIndex} col-${columnIndex}`}
+                key={key}
+                style={style}
+            >
+                {result}
+            </div>
+        );
+    }
+
+    defaultCellRenderer() {
+        return <div></div>;
+    }
+}
