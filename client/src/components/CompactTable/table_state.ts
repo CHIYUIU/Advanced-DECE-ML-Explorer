@@ -194,4 +194,27 @@ export function reduceRows(rows: RowState[], action: CollapseRows | ExpandRows |
       return _remapRows(rows, action);
     case ActionType.FILTER_ROWS:
         return _remapRows(rows, action);
-    d
+    default:
+      return rows;
+  }
+}
+
+export function reorderRows(rows: RowState[], index: number[]) {
+  const action = {type: ActionType.REORDER_ROWS, index} as ReorderRows;
+  return reduceRows(rows, action);
+}
+
+export function filterRows(rows: RowState[], index: number[]) {
+  const action = {type: ActionType.FILTER_ROWS, index} as FilterRows;
+  return reduceRows(rows, action);
+}
+
+export function expandRows(rows: RowState[], startIndex: number, endIndex: number, dataIndex: number[]) {
+  const action = {type: ActionType.EXPAND_ROWS, startIndex, endIndex, dataIndex} as ExpandRows;
+  return reduceRows(rows, action);
+}
+
+export function collapseRows(rows: RowState[], startIndex: number, endIndex: number) {
+  const action = {type: ActionType.COLLAPSE_ROWS, startIndex, endIndex} as CollapseRows;
+  return reduceRows(rows, action);
+}
