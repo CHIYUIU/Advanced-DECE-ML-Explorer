@@ -158,4 +158,40 @@ function _remapRows(rows: RowState[], action: ReorderRows | FilterRows): RowStat
 
   let expandedRows: ExpandedRow[] = rows.filter(r => isExpandedRow(r)) as ExpandedRow[];
   // The expandedRows with updated index
-  expandedRows = expandedR
+  expandedRows = expandedRows.map(r => ({...r, index: index2new[r.dataIndex]}))
+    .filter(r => r.index !== undefined) as ExpandedRow[];
+  expandedRows.sort((a, b) => a.index - b.index);
+  const newRows: RowState[] = [];
+  expandedRows.forEach((row, i, arr) => {
+    if (i === 0 && row.index > 0) {
+      newRows.push(...breakCollapsedRows({startIndex: 0, endIndex: row.index, state: RowStateType.COLLAPSED}));
+    } else {
+      const prev = arr[i-1];
+      if (prev.index + 1 < row.index) {
+        newRows.push(...breakCollapsedRows({startIndex: prev.index + 1, endIndex: row.index, state: RowStateType.COLLAPSED}));
+      }
+    }
+    newRows.push(row);
+  });
+  if (expandedRows.length === 0) {
+    newRows.push(...breakCollapsedRows({startIndex: 0, endIndex: index.length, state: RowStateType.COLLAPSED}));
+  } else {
+    const last = expandedRows[expandedRows.length - 1];
+    if (last.index + 1 < index.length) {
+      newRows.push(...breakCollapsedRows({startIndex: last.index + 1, endIndex: index.length, state: RowStateType.COLLAPSED}));
+    }
+  }
+  return newRows;
+}
+
+export function reduceRows(rows: RowState[], action: CollapseRows | ExpandRows | ReorderRows | FilterRows) {
+  switch (action.type) {
+    case ActionType.COLLAPSE_ROWS:
+      return _collapseRows(rows, action);
+    case ActionType.EXPAND_ROWS:
+      return _expandRows(rows, action);
+    case ActionType.REORDER_ROWS:
+      return _remapRows(rows, action);
+    case ActionType.FILTER_ROWS:
+        return _remapRows(rows, action);
+    d
