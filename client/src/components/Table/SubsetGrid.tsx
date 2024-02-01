@@ -228,3 +228,87 @@ export default class SubsetGrid extends React.PureComponent<ISubsetGridProps, {}
         ...leftGridStyle
       };
     }
+  );
+
+  _rightGridStyle = memoize(
+    (
+      left: number,
+      rightGridStyle?: React.CSSProperties
+    ): React.CSSProperties => {
+      return {
+        left,
+        overflowX: "hidden",
+        overflowY: "hidden",
+        position: "absolute",
+        top: 0,
+        ...rightGridStyle
+      };
+    }
+  );
+
+}
+
+export interface SubsetOperationsProps {
+  onUpdate?: () => void;
+  onCopy?: () => void;
+  onDelete?: () => void;
+  style?: React.CSSProperties;
+}
+
+interface SubsetOperationsState {
+  visible: boolean
+}
+
+class SubsetOperations extends React.PureComponent<SubsetOperationsProps, SubsetOperationsState> {
+
+  constructor(props: SubsetOperationsProps) {
+    super(props);
+    this.state = {
+      visible: false,
+    };
+  }
+
+  handleMenuClick = (e: any) => {
+    const {onUpdate, onCopy, onDelete} = this.props;
+    if (e.key === '1') {
+      onUpdate && onUpdate();
+      this.setState({ visible: false });
+    }
+    else if (e.key === '2') {
+      onCopy && onCopy();
+      this.setState({ visible: false });
+    }
+    else if (e.key === '3') {
+      onDelete && onDelete();
+      this.setState({ visible: false });
+    }
+  };
+
+  handleVisibleChange = (flag: any) => {
+    this.setState({ visible: flag });
+  };
+
+  render() {
+    const {style} = this.props;
+    const menu = (
+      <Menu onClick={this.handleMenuClick}>
+        <Menu.Item key="1">Update</Menu.Item>
+        <Menu.Item key="2">Copy</Menu.Item>
+        <Menu.Item key="3">Delete</Menu.Item>
+      </Menu>
+    );
+    return (
+      <div className="option-container" style={style}>
+        <Dropdown
+          overlay={menu}
+          onVisibleChange={this.handleVisibleChange}
+          visible={this.state.visible}
+        >
+          <a className="customized-dropdown-link" onClick={e => e.preventDefault()}>
+            <Icon type="down" />
+          </a>
+        </Dropdown>
+      </div>
+    );
+  }
+}
