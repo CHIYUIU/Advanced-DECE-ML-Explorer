@@ -257,3 +257,33 @@ interface IColumnTitleProps {
   style?: React.CSSProperties;
   column: TableColumn;
 }
+
+const ColumnTitle: React.FunctionComponent<IColumnTitleProps> = (
+  props: IColumnTitleProps
+) => {
+  const { column, style } = props;
+  const { width, onChangeColumnWidth } = column;
+  const { onSort, sorted, name } = column;
+
+  return (
+    <div className="row-title" style={style}>
+      <div
+        className="cell-content cut-text"
+        style={{ width, height: "100%", padding: "0 9px" }}
+      >
+        <span title={name}>{name}</span>
+      </div>
+      {onSort && (
+        <Icon
+          type="arrow-down"
+          // style={{ position: "absolute", right: 3 }}
+          className={(sorted ? `arrow sorted ${sorted}` : "arrow")}
+          onClick={() => onSort(column.sorted === "ascend" ? "descend" : "ascend")}
+        />
+      )}
+      {onChangeColumnWidth && (
+        <ColResizer x={width} onChangeX={width => onChangeColumnWidth(width)} />
+      )}
+    </div>
+  );
+};
