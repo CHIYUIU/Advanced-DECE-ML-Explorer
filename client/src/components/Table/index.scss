@@ -129,4 +129,17 @@
         transition: transform 0.3s ease-in-out;
     }
     .arrow.ascend svg {
-        transform
+        transform: translate(-50%, -50%) rotate(180deg);
+        transition: transform 0.3s ease-in-out;
+    }
+}
+
+.customized-dropdown-link {
+    margin-top: 30px;
+}
+
+div.option-container {
+    background-color: #eee;
+    stroke-width: 1px;
+    stroke: black;
+}
