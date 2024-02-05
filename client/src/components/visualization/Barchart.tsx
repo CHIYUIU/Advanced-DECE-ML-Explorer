@@ -105,4 +105,58 @@ export function drawBarChart(params: {
 
   const yRange = layout.yRange;
 
-  let _selectedCategories: string[] | undefined = 
+  let _selectedCategories: string[] | undefined = selectedCategories;
+
+  let _hoveredCategory: string | undefined = undefined;
+
+  // Render the base histogram (with all data)
+  const base = getChildOrAppend<SVGGElement, SVGElement>(root, "g", "base")
+    .attr(
+      "transform",
+      `translate(${margin.left + layout.x.paddingOuter()}, ${margin.top})`
+    );
+
+  const baseGs = base.selectAll<SVGGElement, BarLayout[]>("g.groups")
+    .data(allBins || [])
+    .join<SVGGElement>(enter => {
+      return enter
+        .append("g")
+        .attr("class", "groups");
+    })
+    .attr("fill", (d, i) => color(i));
+
+  const barGs = baseGs
+    .selectAll<SVGRectElement, BarLayout>("rect.bar")
+    .data(d => d)
+    .join<SVGRectElement>(enter => {
+      return enter
+        .append("rect")
+        .attr("class", "bar");
+    })
+    .attr("transform", (d, i) => `translate(${d.x}, ${d.y})`)
+    .attr("width", d => d.width)
+    .attr("height", d => d.height)
+
+  // Render the current histogram (with filtered data)
+
+  const current = getChildOrAppend<SVGGElement, SVGElement>(root, "g", "current")
+    .attr(
+      "transform",
+      `translate(${margin.left + layout.x.paddingOuter()}, ${margin.top})`
+    );
+
+  const gs = current.selectAll<SVGGElement, BarLayout[]>("g.groups")
+    .data(bins)
+    .join<SVGGElement>(enter => {
+      return enter
+        .append("g")
+        .attr("class", "groups");
+    })
+    .attr("fill", (d, i) => color(i));
+
+  const merged = gs
+    .selectAll("rect.bar")
+    .data(d => d)
+    .join<SVGRectElement>(enter => {
+      return enter
+   
