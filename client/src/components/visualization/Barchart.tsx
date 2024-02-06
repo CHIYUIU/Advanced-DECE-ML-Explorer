@@ -159,4 +159,58 @@ export function drawBarChart(params: {
     .data(d => d)
     .join<SVGRectElement>(enter => {
       return enter
-   
+        .append("rect")
+        .attr("class", "bar");
+    })
+    .attr("transform", (d, i) => `translate(${d.x}, ${d.y})`)
+    .attr("width", d => d.width)
+    .attr("height", d => d.height);
+
+  if (!isArrays(data)) {
+    merged.attr("fill", (d, i) => color(i));
+    barGs.attr("fill", (d, i) => color(i));
+  }
+
+  // Render the shades for highlighting selected regions
+  if (renderShades){
+  const gShades = getChildOrAppend<SVGGElement, SVGElement>(
+    root,
+    "g",
+    "shades"
+  )
+    .attr(
+      "transform",
+      `translate(${margin.left + layout.x.paddingOuter()}, ${margin.top})`
+    );
+
+  const yreverse = d3.scaleLinear().domain(layout.y.domain()).range([layout.y.range()[1], layout.y.range()[0]])
+    if (drawAxis) {
+      base.call(d3.axisLeft(yreverse).ticks(2));
+    }
+
+  const shadeRects = gShades.selectAll("rect.shade")
+    .data(layout.x.domain())
+    .join<SVGRectElement>(enter => {
+      return enter.append("rect")
+        .attr("class", 'shade')
+    })
+    .attr("x", d => layout.x(d)!)
+    .attr("width", layout.groupedBarWidth)
+    .attr("height", yRange[1])
+    .classed("show", (d, idx) =>
+      _selectedCategories?.includes(d) || d === _hoveredCategory
+    );
+
+  if (twisty) {
+    shadeRects.style("fill", (d, i) => d3.interpolateReds(twisty(i)?twisty(i):0));
+  }
+
+  const rerenderShades = () => {
+    shadeRects.classed("show", (d, idx) =>
+      _selectedCategories?.includes(d) || d === _hoveredCategory
+    );
+  }
+
+  shadeRects
+    .on("mouseover", function (data, idx, groups) {
+      _hoveredCategory = layout.x.domain()[idx];
