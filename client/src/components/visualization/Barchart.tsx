@@ -214,3 +214,54 @@ export function drawBarChart(params: {
   shadeRects
     .on("mouseover", function (data, idx, groups) {
       _hoveredCategory = layout.x.domain()[idx];
+      rerenderShades();
+    })
+    .on("mousemove", function (data, idx, groups) {
+      if (_hoveredCategory === layout.x.domain()[idx])
+        _hoveredCategory = undefined;
+      rerenderShades();
+    })
+    .on("click",function (data, idx) {
+      const selectedCat = layout.x.domain()[idx];
+      if (_selectedCategories) {
+        const indexOfCat = _selectedCategories.indexOf(selectedCat);
+        if (indexOfCat > -1) {
+          _selectedCategories.splice(indexOfCat, 1);
+          _hoveredCategory = undefined;
+          rerenderShades();
+          onSelectCategories && onSelectCategories(_selectedCategories);
+        }
+        else {
+          _selectedCategories.push(selectedCat);
+          rerenderShades();
+          onSelectCategories && onSelectCategories(_selectedCategories);
+        }
+      }
+      else {
+        _selectedCategories = [selectedCat];
+        rerenderShades();
+        onSelectCategories && onSelectCategories(_selectedCategories);
+      }
+    })
+
+  }
+
+  if (rectStyle) {
+    Object.keys(rectStyle).forEach(key => {
+      merged.style(
+        key,
+        (rectStyle[key as keyof typeof rectStyle] || null) as null
+      );
+    });
+  }
+}
+
+export interface IBarChartProps extends Omit<IBarChartOptions, "allData"> {
+  data: string[] | string[][];
+  barWidth?: number;
+  categories?: string[];
+  allData?: string[] | string[][];
+  style?: React.CSSProperties;
+  svgStyle?: React.CSSProperties;
+  xScale: d3.ScaleBand<string>;
+  cla
