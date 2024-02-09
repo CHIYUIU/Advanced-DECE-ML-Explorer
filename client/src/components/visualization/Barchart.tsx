@@ -264,4 +264,69 @@ export interface IBarChartProps extends Omit<IBarChartOptions, "allData"> {
   style?: React.CSSProperties;
   svgStyle?: React.CSSProperties;
   xScale: d3.ScaleBand<string>;
-  cla
+  className?: string;
+}
+
+export interface IBarChartState {
+  hoveredCategory: string | null;
+}
+
+export class BarChart extends React.PureComponent<
+  IBarChartProps,
+  IBarChartState
+  > {
+  static defaultProps = { ...defaultOptions };
+  private ref: React.RefObject<SVGSVGElement> = React.createRef();
+  private shouldPaint: boolean = false;
+  constructor(props: IBarChartProps) {
+    super(props);
+
+    this.state = { hoveredCategory: null };
+    this.paint = this.paint.bind(this);
+  }
+
+  count = memoizeOne(countCategories);
+  countAll = memoizeOne(countCategories);
+
+  public paint(svg: SVGSVGElement | null = this.ref.current) {
+    if (svg) {
+      console.debug("rendering bar chart");
+      const { data, style, svgStyle, className, height, xScale, allData, ...rest } = this.props;
+      drawBarChart(
+        {svg, data, allData, dmcData: data, options: {
+        ...rest,
+        xScale,
+        height: height,
+      }});
+      this.shouldPaint = false;
+    }
+  }
+
+  public componentDidMount() {
+    this.paint();
+  }
+
+  public componentDidUpdate(
+    prevProps: IBarChartProps,
+    prevState: IBarChartState
+  ) {
+    this.shouldPaint = true;
+    const delayedPaint = () => {
+      if (this.shouldPaint) this.paint();
+    };
+    window.setTimeout(delayedPaint, 200);
+    // }
+  }
+
+  public render() {
+    const {
+      style,
+      svgStyle,
+      className,
+      width,
+      height,
+      data,
+      categories
+    } = this.props;
+    const { hoveredCategory } = this.state;
+    const barData = 
