@@ -329,4 +329,55 @@ export class BarChart extends React.PureComponent<
       categories
     } = this.props;
     const { hoveredCategory } = this.state;
-    const barData = 
+    const barData = this.count(isArrays(data) ? data[0] : data, categories);
+    return (
+      <div className={(className || "") + " bar-chart"} style={style}>
+        <svg
+          ref={this.ref}
+          style={svgStyle}
+          width={width}
+          height={height}
+        />
+      </div>
+    );
+  }
+}
+
+export default BarChart;
+
+interface BarChartLayoutProps extends ChartOptions {
+  data: string[] | string[][],
+  mode: 'side-by-side' | 'stacked',
+  dmcData?: string[] | string[][],
+  innerPadding?: number,
+  groupInnerPadding?: number,
+  xScale?: d3.ScaleBand<string>,
+  yScale?: d3.ScaleLinear<number, number>,
+  direction?: 'up' | 'down',
+}
+
+interface BarLayout extends Category {
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+}
+
+export class BarChartLayout {
+  private _data: string[][];
+  private _dmcData: string[][];
+  private _mode: 'side-by-side' | 'stacked';
+  private _width: number;
+  private _height: number;
+  private _margin: IMargin;
+  private _innerPadding: number;
+  private _groupInnerPadding: number;
+  private _xScale: d3.ScaleBand<string>;
+  private _yScale: d3.ScaleLinear<number, number>;
+  private _direction: 'up' | 'down';
+
+  constructor(props: BarChartLayoutProps) {
+    const { data, dmcData, mode, width, height, innerPadding, groupInnerPadding, xScale, margin, yScale, direction } = props;
+    this._data = isArrays(data) ? data : [data];
+    this._dmcData = dmcData ? (isArrays(dmcData) ? dmcData : [dmcData]) : this._data;
+    // this._mode = 
