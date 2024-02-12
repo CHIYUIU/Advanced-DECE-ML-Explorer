@@ -420,4 +420,53 @@ export class BarChartLayout {
   }
 
   public get x(): d3.ScaleBand<string> {
-    return t
+    return this._xScale;
+  }
+
+  public get y(): d3.ScaleLinear<number, number> {
+    return this._yScale;
+  }
+
+  public get gBins(): Category[][] {
+    return this._data.map(d => this.count(d, this.x.domain()));
+  }
+
+  private count = memoizeOne(countCategories);
+
+  public xScale(newx: d3.ScaleBand<string>) {
+    this._xScale = newx;
+    return this;
+  }
+
+  public yScale(newy: d3.ScaleLinear<number, number>) {
+    this._yScale = newy;
+    return this;
+  }
+
+  public get groupedBarWidth() {
+    return this.x.bandwidth();
+  }
+
+  public get barWidth() {
+    const nGroups = this.gBins.length;
+    const groupedBarWidth = this.groupedBarWidth - this._innerPadding;
+    return Math.max(this._mode === 'side-by-side' ? (groupedBarWidth / nGroups - this._groupInnerPadding) : groupedBarWidth, 1)
+  }
+
+  public get layout(): BarLayout[][] {
+    const gBins = this.gBins;
+    const nGroups = gBins.length;
+    const nBins = gBins[0].length;
+
+    const barWidth = this.barWidth;
+    const dx: number[][] = _.range(nGroups).map((d, i) => _.range(nBins).map(() => this._mode === 'side-by-side' ? i * (barWidth + this._groupInnerPadding) : 0));
+    const dy: number[][] = _.range(nGroups).map((d, groupId) => _.range(nBins).map((d, binId) => this._mode === 'side-by-side' ? 0 :
+      this.y(d3.sum(
+        gBins.map(bins => bins[binId].count).filter((d, i) => i < groupId)
+      )) + (groupId > 0 ? this.yRange[0] : 0)
+    ));
+
+    return this.gBins.map((bins, groupId) => bins.map((bin, binId) => {
+      const Layout: BarLayout = {
+        ...bin,
+        x: this.x(bin.name) as number + dx
