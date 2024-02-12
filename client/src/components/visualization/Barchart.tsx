@@ -380,4 +380,44 @@ export class BarChartLayout {
     const { data, dmcData, mode, width, height, innerPadding, groupInnerPadding, xScale, margin, yScale, direction } = props;
     this._data = isArrays(data) ? data : [data];
     this._dmcData = dmcData ? (isArrays(dmcData) ? dmcData : [dmcData]) : this._data;
-    // this._mode = 
+    // this._mode = mode;
+    this._mode = 'side-by-side';
+    this._width = width;
+    this._height = height;
+    this._margin = getMargin(margin);
+    this._innerPadding = innerPadding ? innerPadding : 1;
+    this._groupInnerPadding = groupInnerPadding ? groupInnerPadding : (this._data.length === 1 ? 0 : 1);
+    this._direction = direction ? direction : 'up';
+
+    this._xScale = this.getXScale(xScale);
+    this._yScale = this.getYScales(yScale);
+  }
+
+  private getXScale(xScale?: d3.ScaleBand<string>): d3.ScaleBand<string> {
+    return xScale ? xScale : getScaleBand(this.xRange[0], this.xRange[1], _.flatten(this._dmcData));
+  }
+
+  private getYScales(yScale?: d3.ScaleLinear<number, number>):
+    d3.ScaleLinear<number, number> {
+    const dmcBins = this._dmcData.map(d => this.count(d, this.x.domain()));
+    const yMax = this._mode === 'side-by-side' ? d3.max(dmcBins, function (bs) {
+      return d3.max(bs, d => d.count);
+    }) : d3.max(transMax(dmcBins), function (bs) {
+      return d3.sum(bs, d => d.count);
+    });
+    if (yMax === undefined) throw "Invalid bins";
+    const _yScale = yScale ? yScale : d3.scaleLinear().range(this.yRange).domain([0, yMax]);
+    return _yScale;
+  }
+
+  public get xRange(): [number, number] {
+    // return [this._margin.left, this._width - this._margin.right];
+    return [0, this._width - this._margin.right - this._margin.left];
+  }
+
+  public get yRange(): [number, number] {
+    return [0, this._height - this._margin.bottom - this._margin.top];
+  }
+
+  public get x(): d3.ScaleBand<string> {
+    return t
