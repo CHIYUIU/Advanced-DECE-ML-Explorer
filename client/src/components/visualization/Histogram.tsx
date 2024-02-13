@@ -842,3 +842,60 @@ export class HistogramLayout {
   }
 
   public get gBins(): d3.Bin<number, number>[][] {
+    const histogram = d3
+      .histogram()
+      .domain(this.x.domain() as [number, number])
+      .thresholds(this._ticks);
+    return this._data.map(d => histogram(d));
+  }
+
+  public xScale(newx: d3.ScaleLinear<number, number>) {
+    this._xScale = newx;
+    return this;
+  }
+
+  public yScale(newy: d3.ScaleLinear<number, number>) {
+    this._yScale = newy;
+    return this;
+  }
+
+  public get ticks() {
+    return this._ticks;
+  }
+
+  public get groupedBarWidth() {
+    const nBins = this.gBins[0].length;
+    return (this.xRange[1] - this.xRange[0]) / nBins;
+  }
+
+  public get barWidth() {
+    const nGroups = this.gBins.length;
+    const groupedBarWidth = this.groupedBarWidth - this._innerPadding;
+    return Math.max(this._mode === 'side-by-side' ? (groupedBarWidth / nGroups - this._groupInnerPadding) : groupedBarWidth, 1)
+  }
+
+  public get layout(): BarLayout[][] {
+    const gBins = this.gBins;
+    const nGroups = gBins.length;
+    const nBins = gBins[0].length;
+
+    const barWidth = this.barWidth;
+    const dx: number[][] = _.range(nGroups).map((d, i) => _.range(nBins).map(() => this._mode === 'side-by-side' ? i * (barWidth + this._groupInnerPadding) : 0));
+    const dy: number[][] = _.range(nGroups).map((d, groupId) => _.range(nBins).map((d, binId) => this._mode === 'side-by-side' ? 0 :
+      this.y(d3.sum(
+        gBins.map(bins => bins[binId].length).filter((d, i) => i < groupId)
+      )) + (groupId > 0 ? this.yRange[0] : 0)
+    ));
+
+    return this.gBins.map((bins, groupId) => bins.map((bin, binId) => {
+      const Layout: BarLayout = {
+        ...bin,
+        x: this.x(bin.x0 as number) + dx[groupId][binId],
+        y: this._direction === 'up' ? (this.yRange[1] - dy[groupId][binId] - this.y(bin.length)): dy[groupId][binId],
+        width: barWidth,
+        height: this.y(bin.length) - this.y(0),
+      } as BarLayout;
+      return Layout;
+    }))
+  }
+}
