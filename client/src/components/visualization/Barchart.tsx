@@ -469,4 +469,12 @@ export class BarChartLayout {
     return this.gBins.map((bins, groupId) => bins.map((bin, binId) => {
       const Layout: BarLayout = {
         ...bin,
-        x: this.x(bin.name) as number + dx
+        x: this.x(bin.name) as number + dx[groupId][binId],
+        y: this._direction === 'up' ? (this.yRange[1] - dy[groupId][binId] - this.y(bin.count)) : dy[groupId][binId],
+        width: barWidth,
+        height: this.y(bin.count),
+      } as BarLayout;
+      return Layout;
+    }))
+  }
+}
