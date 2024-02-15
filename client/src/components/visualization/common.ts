@@ -121,4 +121,46 @@ function getOuterPadding(
   maxStep: number
 ) {
   const minOuterPadding = Math.round(
-    (width - maxStep * nBars + maxStep * innerPadding) / 
+    (width - maxStep * nBars + maxStep * innerPadding) / 2 / maxStep
+  );
+  let outerPadding = Math.max(minOuterPadding, innerPadding);
+  return outerPadding;
+}
+
+export function getScaleBand(
+  x0: number,
+  x1: number,
+  data?: ArrayLike<string>,
+  categories?: Readonly<string[]>,
+  innerPadding: number = 0.25,
+  maxStep = 35
+): d3.ScaleBand<string> {
+  let domain = categories;
+  if (domain === undefined) {
+    if (data != undefined) {
+      domain = countCategories(data).map(d => d.name);
+    }
+    else {
+      throw "Column data and extent should not be both invalid."
+    }
+  }
+  const outerPadding = getOuterPadding(
+    x1 - x0,
+    domain.length,
+    innerPadding,
+    maxStep
+  );
+
+  return d3
+    .scaleBand()
+    .domain(domain)
+    .paddingInner(innerPadding)
+    .paddingOuter(outerPadding)
+    .rangeRound([x0, x1]);
+}
+
+export const DELAY_PAINT_TIME = 100;
+
+export function isStringArray(x: number[] | string[]): x is string[] {
+  return typeof x[0] === 'string';
+}
