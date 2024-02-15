@@ -51,4 +51,74 @@ export type PropertyValueFn<T, E extends d3.BaseType, Datum, Result> = {
   [P in keyof T]: Result | d3.ValueFn<E, Datum, Result>;
 };
 
-export type CS
+export type CSSPropertiesFn<E extends d3.BaseType, Datum> = PropertyValueFn<
+  CSSProperties,
+  E,
+  Datum,
+  string | number
+>;
+
+export interface ChartOptions {
+  width: number;
+  height: number;
+  margin: MarginType;
+}
+
+export function getChildOrAppend<
+  GElement extends d3.BaseType,
+  PElement extends d3.BaseType
+>(root: d3.Selection<PElement, any, any, any>, tag: string, className: string) {
+  const node = root.selectAll(`${tag}.${className}`);
+
+  node
+    .data([tag])
+    .enter()
+    .append<GElement>(tag)
+    .attr("class", className);
+
+  return root.select<GElement>(`${tag}.${className}`);
+}
+
+export function getScaleLinear(
+  x0: number,
+  x1: number,
+  data?: ArrayLike<number>,
+  extent?: [number, number]
+): d3.ScaleLinear<number, number> {
+
+  let _extent = extent
+  if (_extent === undefined) {
+    if (data != undefined) {
+      _extent = (d3.extent(data) as [number, number]);
+    }
+    else {
+      throw "Column data and extent should not be both invalid."
+    }
+  }
+  return d3
+    .scaleLinear()
+    .domain(_extent)
+    .nice()
+    .range([x0, x1]);
+
+}
+
+export function countCategories(data: ArrayLike<string | number>, categories?: string[]) {
+  const counter = _.countBy(data);
+  const domain: string[] = categories || _.keys(counter).sort();
+  return domain.map(
+    (c, i) => ({
+      count: counter[c] || 0,
+      name: domain[i]
+    })
+  );
+}
+
+function getOuterPadding(
+  width: number,
+  nBars: number,
+  innerPadding: number,
+  maxStep: number
+) {
+  const minOuterPadding = Math.round(
+    (width - maxStep * nBars + maxStep * innerPadding) / 
