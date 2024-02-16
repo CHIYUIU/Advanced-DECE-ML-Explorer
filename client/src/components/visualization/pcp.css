@@ -30,4 +30,5 @@ text.tick-text {
     fill: #333;
     text-anchor: middle;
     font-size: 12px;
-    font-weigh
+    font-weight: bolder;
+}
