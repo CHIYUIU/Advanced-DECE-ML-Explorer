@@ -154,4 +154,34 @@ export function drawBandSlider(
         .data(x.domain())
         .join(
             enter => {
-                return enter.append
+                return enter.append("g")
+                    .attr("class", "tick");
+            }
+        )
+        .attr("transform", d => `translate(${x(d) as number}, ${6})`);
+
+    const checkboxes = x.domain().map((d, i) => d3CheckBox({ x: -7, defaultValue: barActivation[i], onClick: onSelectBand && (() => onSelectBand(i)) }));
+    tick.each((d, i, n) => checkboxes[i](n[i] as SVGGElement))
+    getChildOrAppend(tick, "text", "tick-text")
+        .text(d => d)
+        .attr("dy", 22)
+        .attr("class", "tick-text");
+
+    const dragHandle = d3.drag<SVGGElement, any>()
+        .on("drag", (d, i, n) => {
+            const xPos = Math.min(xRange[1], Math.max(d3.event.x, xRange[0]));
+            d3.select(n[i]).attr("transform", `translate(${xPos}, ${0})`)
+        })
+        .on("end", (d, i, n) => {
+            const xPos = Math.min(xRange[1], Math.max(d3.event.x, xRange[0]));
+            const xIndex = Math.max(Math.round((xPos - x.range()[0] - x.step() / 2) / x.step()) - 1, 0);
+            const xValue = x.domain()[xIndex];
+            onValueChange && onValueChange(xValue);
+        });
+
+    const handleBase = getChildOrAppend<SVGGElement, SVGGElement>(base, "g", "handle-base")
+        .attr("transform", `translate(${defaultValue ? x(defaultValue) : 0}, ${0})`)
+        .call(dragHandle);
+
+    const handle = getChildOrAppend<SVGCircleElement, SVGGElement>(handleBase, "circle", "handle");
+}
