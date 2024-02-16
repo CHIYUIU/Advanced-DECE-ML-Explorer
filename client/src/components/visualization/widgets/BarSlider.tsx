@@ -73,4 +73,43 @@ export class BarSlider extends React.Component<BarSliderProps, BarSliderState>{
         const {column, defaultValue, xScale, defaultBarActivation} = this.props;
         if (column.name !== prevProps.column.name) {
             this.setState({
-                instanceValue: defaultValue?defa
+                instanceValue: defaultValue?defaultValue: xScale.domain()[0],
+                barActivation: defaultBarActivation?defaultBarActivation: xScale.domain().map(d => true)
+            });
+        }
+        this.drawAll();
+    }
+
+    drawAll(){
+        const {width, height, margin, column, xScale} = this.props;
+        const {instanceValue, barActivation} = this.state;
+        const sliderNode = this.sliderRef.current;
+        const barChartNode = this.barRef.current;
+        const onValueChange = this.onValueChange;
+        if (barChartNode) {
+            drawSimpleBarchart(barChartNode, {width, height, margin, xScale, selected: barActivation, onClick: this.onBarClicked}, column.series.toArray())
+        }
+        if (sliderNode){
+            drawBandSlider(sliderNode, {width, height, margin, xScale, defaultValue: instanceValue, barActivation, onValueChange, onSelectBand: this.onBarSelected}, column.series.toArray());
+        }
+        
+
+    }
+
+    onBarClicked(index: number) {
+        this.onValueChange(this.props.column.categories[index]);
+    }
+
+    onBarSelected(index: number){
+        const {onUpdateCats, column} = this.props;
+        const {barActivation} = this.state;
+        barActivation[index] = !barActivation[index];
+        this.setState({barActivation});
+        onUpdateCats && onUpdateCats(column.categories.filter((d, i) => barActivation[i]));
+    }
+
+    onValueChange(newValue: string){
+        const {onValueChange} = this.props;
+        this.setState({instanceValue: newValue});
+        onValueChange && onValueChange(newValue);
+  
