@@ -112,4 +112,46 @@ export class BarSlider extends React.Component<BarSliderProps, BarSliderState>{
         const {onValueChange} = this.props;
         this.setState({instanceValue: newValue});
         onValueChange && onValueChange(newValue);
-  
+    }
+}
+
+export interface BandSliderOptions extends ChartOptions {
+    defaultValue?: string;
+    onValueChange?: (newValue: string) => void;
+    onSelectBand?: (band: number) => void;
+    xScale?: d3.ScaleBand<string>
+    barActivation: boolean[]
+}
+
+export function drawBandSlider(
+    rootEle: SVGElement | SVGGElement,
+    options: BandSliderOptions,
+    data: ArrayLike<string>,
+) {
+    const { height, width, onSelectBand, onValueChange, defaultValue, barActivation } = options;
+    const margin = getMargin(options.margin);
+    const _width = width - margin.left - margin.right;
+    const _height = height - margin.top - margin.bottom;
+    const xRange = [0, width - margin.right - margin.left] as [number, number];
+    const x = options.xScale ? options.xScale : getScaleBand(0, _width, data)
+
+    const root = d3.select(rootEle);
+    const base = getChildOrAppend<SVGGElement, SVGElement | SVGGElement>(root, "g", "slider-base")
+        .attr("transform", `translate(${margin.left}, ${margin.top + _height + 2})`);
+
+    getChildOrAppend(base, "line", "track")
+        .attr("x1", -2)
+        .attr("x2", _width + 2);
+
+    getChildOrAppend(base, "line", "track-inside")
+        .attr("x1", -2)
+        .attr("x2", _width + 2);
+
+    // const xticks = x.ticks(ticks);
+    const tickBase = getChildOrAppend(base, "g", "tick-base");
+
+    const tick = tickBase.selectAll<SVGGElement, any>("g.tick")
+        .data(x.domain())
+        .join(
+            enter => {
+                return enter.append
