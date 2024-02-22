@@ -70,3 +70,5 @@ export function d3CheckBox(
             .attr("d", line(coordinates)!)
             .classed("check-box-mark-checked", checked)
     }
+    return checkBox
+}
