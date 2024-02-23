@@ -41,4 +41,19 @@ export function drawSimpleBarchart(
     const barBase = getChildOrAppend<SVGGElement, SVGElement>(root, "g", "barchart-base")
         .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-    barB
+    barBase.selectAll<SVGRectElement, d3.Bin<number, number>>("rect.bar")
+        .data(categoryData)
+        .join(enter => {
+            return enter.append("rect")
+                .attr("class", "bar");
+        })
+        .attr("transform", d => `translate(${x(d.name)! - x.bandwidth()/2}, ${yRange[1] - y(d.count)})`)
+        .attr("width", d => {
+            return x.bandwidth();
+        })
+        .on("click", (d, i) => onClick && onClick(i))
+        .classed("selected", (d, i) => selected?selected[i]:true)
+        .attr("height", d => {
+            return y(d.count) - yRange[0] + 0.01;
+        });
+}

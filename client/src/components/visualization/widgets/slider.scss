@@ -1,0 +1,36 @@
+.slider-base {
+    line.track {
+        stroke: #bbb;
+        stroke-width: 6px;
+        stroke-linecap: round;
+    }
+    line.track-inside {
+        stroke: #eee;
+        stroke-width: 4px;
+        stroke-linecap: round;
+    }
+    line.track-selected {
+        stroke: #91d5ff;
+        stroke-width: 4px;
+    }
+    line.tick-line {
+        stroke: #aaa;
+        stroke-width: 1px;
+    }
+    text.tick-text {
+        fill: #aaa;
+        text-anchor: middle;
+        font-size: 6px;
+    }
+    text.handle-text {
+        fill: #333;
+        text-anchor: middle;
+        font-size: 12px;
+        font-weight: bolder;
+    }
+    circle.handle {
+        r: 5;
+        fill: white;
+        stroke: #3abb6f;
+        stroke-width: 2px;
+  
