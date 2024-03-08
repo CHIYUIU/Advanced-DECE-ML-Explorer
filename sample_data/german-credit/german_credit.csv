@@ -1,0 +1,25 @@
+,Age,Sex,Job,Housing,Saving accounts,Checking account,Credit amount,Duration,Purpose,Risk
+0,67,male,2,own,unknown,little,1169,6,radio/TV,good
+1,22,female,2,own,little,moderate,5951,48,radio/TV,bad
+2,49,male,1,own,little,unknown,2096,12,education,good
+3,45,male,2,free,little,little,7882,42,furniture/equipment,good
+4,53,male,2,free,little,little,4870,24,car,bad
+5,35,male,1,free,unknown,unknown,9055,36,education,good
+6,53,male,2,own,quite rich,unknown,2835,24,furniture/equipment,good
+7,35,male,3,rent,little,moderate,6948,36,car,good
+8,61,male,1,own,rich,unknown,3059,12,radio/TV,good
+9,28,male,3,own,little,moderate,5234,30,car,bad
+10,25,female,2,rent,little,moderate,1295,12,car,bad
+11,24,female,2,rent,little,little,4308,48,business,bad
+12,22,female,2,own,little,moderate,1567,12,radio/TV,good
+13,60,male,1,own,little,little,1199,24,car,bad
+14,28,female,2,rent,little,little,1403,15,car,good
+15,32,female,1,own,moderate,little,1282,24,radio/TV,bad
+16,53,male,2,own,unknown,unknown,2424,24,radio/TV,good
+17,25,male,2,own,unknown,little,8072,30,business,good
+18,44,female,3,free,little,moderate,12579,24,car,bad
+19,31,male,2,own,quite rich,unknown,3430,24,radio/TV,good
+20,48,male,2,own,little,unknown,2134,9,car,good
+21,44,male,2,rent,quite rich,little,2647,6,radio/TV,good
+22,48,male,1,rent,little,little,2241,10,car,good
+23,44,male,2,own,moderate,moderate,1804,
