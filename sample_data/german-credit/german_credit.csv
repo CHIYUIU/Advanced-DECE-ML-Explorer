@@ -187,4 +187,32 @@
 185,31,male,2,own,little,unknown,1360,15,radio/TV,good
 186,74,female,3,free,little,moderate,5129,9,car,bad
 187,68,male,0,free,little,moderate,1175,16,car,good
-188,20,male,2,own,moderate,little,674,12,radio/TV,b
+188,20,male,2,own,moderate,little,674,12,radio/TV,bad
+189,33,female,2,own,little,moderate,3244,18,furniture/equipment,good
+190,54,male,3,own,rich,unknown,4591,24,business,bad
+191,34,male,1,free,moderate,moderate,3844,48,business,bad
+192,36,male,2,own,little,moderate,3915,27,business,bad
+193,29,male,2,rent,little,unknown,2108,6,radio/TV,good
+194,21,male,2,rent,moderate,moderate,3031,45,radio/TV,bad
+195,34,female,3,own,little,moderate,1501,9,education,bad
+196,28,female,2,own,little,unknown,1382,6,radio/TV,good
+197,27,female,2,rent,moderate,moderate,951,12,furniture/equipment,bad
+198,36,male,2,free,unknown,moderate,2760,24,car,good
+199,40,male,3,own,little,moderate,4297,18,furniture/equipment,bad
+200,52,male,2,own,quite rich,unknown,936,9,education,good
+201,27,male,1,own,little,little,1168,12,car,good
+202,26,male,2,own,little,unknown,5117,27,business,good
+203,21,male,2,rent,little,little,902,12,education,bad
+204,38,male,1,own,little,unknown,1495,12,car,good
+205,38,male,3,free,little,little,10623,30,car,good
+206,43,male,2,own,little,unknown,1935,12,furniture/equipment,good
+207,26,male,2,own,little,moderate,1424,12,domestic appliances,good
+208,21,male,1,own,little,little,6568,24,business,good
+209,55,male,2,own,rich,unknown,1413,12,car,good
+210,33,male,2,own,unknown,unknown,3074,9,radio/TV,good
+211,45,female,1,own,unknown,unknown,3835,36,radio/TV,good
+212,50,male,2,own,little,little,5293,27,business,bad
+213,66,male,3,own,little,rich,1908,30,business,bad
+214,51,male,2,own,unknown,unknown,3342,36,radio/TV,good
+215,39,female,1,own,unknown,moderate,932,6,education,good
+216,31,male,2,ow
