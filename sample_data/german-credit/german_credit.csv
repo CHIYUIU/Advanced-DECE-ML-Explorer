@@ -161,4 +161,30 @@
 159,34,male,1,own,unknown,unknown,1898,6,radio/TV,good
 160,36,male,2,own,moderate,unknown,2872,24,radio/TV,good
 161,30,female,2,own,little,unknown,1055,18,car,good
-162,36,male,2,own,quite rich,unknown,1262,15,d
+162,36,male,2,own,quite rich,unknown,1262,15,domestic appliances,good
+163,70,male,3,free,little,moderate,7308,10,car,good
+164,36,male,2,own,quite rich,unknown,909,36,car,good
+165,32,male,2,own,quite rich,unknown,2978,6,furniture/equipment,good
+166,33,female,2,own,little,little,1131,18,furniture/equipment,bad
+167,20,female,2,own,rich,moderate,1577,11,furniture/equipment,good
+168,25,female,2,rent,little,unknown,3972,24,furniture/equipment,good
+169,31,male,2,own,little,moderate,1935,24,business,bad
+170,33,male,2,rent,little,little,950,15,car,bad
+171,26,female,2,own,little,unknown,763,12,furniture/equipment,good
+172,34,female,3,own,little,moderate,2064,24,furniture/equipment,bad
+173,33,male,2,own,little,moderate,1414,8,radio/TV,good
+174,26,male,2,own,little,little,3414,21,education,bad
+175,53,female,3,own,unknown,unknown,7485,30,car,bad
+176,42,male,2,own,little,little,2577,12,furniture/equipment,good
+177,52,male,2,own,quite rich,little,338,6,radio/TV,good
+178,31,male,3,rent,little,unknown,1963,12,radio/TV,good
+179,65,male,2,own,little,little,571,21,car,good
+180,28,male,2,own,little,unknown,9572,36,business,bad
+181,30,male,3,own,little,moderate,4455,36,business,bad
+182,40,male,1,own,unknown,little,1647,21,car,bad
+183,50,male,2,own,rich,unknown,3777,24,furniture/equipment,good
+184,36,male,2,own,little,moderate,884,18,car,bad
+185,31,male,2,own,little,unknown,1360,15,radio/TV,good
+186,74,female,3,free,little,moderate,5129,9,car,bad
+187,68,male,0,free,little,moderate,1175,16,car,good
+188,20,male,2,own,moderate,little,674,12,radio/TV,b
