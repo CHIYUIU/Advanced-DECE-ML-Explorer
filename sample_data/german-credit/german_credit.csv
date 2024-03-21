@@ -698,4 +698,30 @@
 696,29,male,2,own,little,moderate,1103,12,radio/TV,good
 697,38,female,0,own,little,unknown,926,12,car,good
 698,24,male,2,own,little,unknown,1800,18,radio/TV,good
-699,40,male,3,rent,little,ri
+699,40,male,3,rent,little,rich,1905,15,education,good
+700,29,female,1,rent,quite rich,unknown,1123,12,furniture/equipment,bad
+701,46,male,2,free,little,little,6331,48,car,bad
+702,47,female,2,free,moderate,rich,1377,24,radio/TV,good
+703,41,male,2,own,moderate,moderate,2503,30,business,good
+704,32,female,2,own,little,moderate,2528,27,business,good
+705,35,female,2,free,quite rich,unknown,5324,15,car,good
+706,24,male,2,own,moderate,moderate,6560,48,car,bad
+707,25,female,2,rent,little,moderate,2969,12,furniture/equipment,bad
+708,25,female,2,own,little,moderate,1206,9,radio/TV,good
+709,37,male,1,own,little,moderate,2118,9,radio/TV,good
+710,32,male,3,own,quite rich,unknown,629,18,radio/TV,good
+711,35,female,2,free,little,little,1198,6,education,bad
+712,46,male,3,own,unknown,unknown,2476,21,car,good
+713,25,male,1,own,little,little,1138,9,radio/TV,good
+714,27,male,3,own,little,moderate,14027,60,car,bad
+715,63,male,2,own,unknown,unknown,7596,30,car,good
+716,40,male,2,own,unknown,unknown,3077,30,radio/TV,good
+717,32,male,3,free,little,unknown,1505,18,radio/TV,good
+718,31,male,2,own,unknown,rich,3148,24,radio/TV,good
+719,31,male,2,own,moderate,moderate,6148,20,car,good
+720,34,male,3,own,little,rich,1337,9,radio/TV,bad
+721,24,female,2,rent,rich,moderate,433,6,education,bad
+722,24,female,1,own,little,little,1228,12,car,bad
+723,66,female,1,own,quite rich,moderate,790,9,radio/TV,good
+724,21,female,2,rent,little,unknown,2570,27,car,bad
+725,41,female,1,own,rich,unknown,250,6,car,good
