@@ -919,4 +919,30 @@
 917,68,male,3,own,little,little,14896,6,car,bad
 918,33,male,2,own,moderate,little,2359,24,furniture/equipment,bad
 919,39,male,3,rent,little,little,3345,24,furniture/equipment,bad
-920,28,female,
+920,28,female,2,own,little,unknown,1817,18,furniture/equipment,good
+921,37,male,3,own,quite rich,unknown,12749,48,radio/TV,good
+922,22,female,2,rent,little,little,1366,9,radio/TV,bad
+923,30,male,2,rent,little,moderate,2002,12,car,good
+924,55,male,2,own,little,little,6872,24,furniture/equipment,bad
+925,46,male,2,own,little,little,697,12,car,bad
+926,21,female,2,rent,little,little,1049,18,furniture/equipment,good
+927,39,male,2,free,little,little,10297,48,car,bad
+928,58,male,2,own,unknown,unknown,1867,30,radio/TV,good
+929,43,male,1,own,little,little,1344,12,car,good
+930,24,male,1,own,little,little,1747,24,furniture/equipment,good
+931,22,female,2,own,little,moderate,1670,9,radio/TV,bad
+932,30,male,2,own,little,unknown,1224,9,car,good
+933,42,male,2,own,quite rich,unknown,522,12,radio/TV,good
+934,23,female,2,own,little,little,1498,12,radio/TV,good
+935,30,male,3,own,moderate,moderate,1919,30,radio/TV,bad
+936,28,female,1,own,little,rich,745,9,radio/TV,bad
+937,30,male,3,rent,little,moderate,2063,6,radio/TV,good
+938,42,male,2,free,little,moderate,6288,60,education,bad
+939,46,male,3,own,unknown,unknown,6842,24,car,good
+940,45,male,3,own,unknown,unknown,3527,12,car,good
+941,31,male,1,own,little,unknown,1546,10,car,good
+942,31,male,2,own,unknown,unknown,929,24,furniture/equipment,good
+943,42,male,1,own,little,unknown,1455,4,car,good
+944,46,female,2,rent,little,little,1845,15,furniture/equipment,good
+945,30,female,2,own,quite rich,moderate,8358,48,car,good
+946,30,male,2,free,quite rich,little,3349,24,furnitur
