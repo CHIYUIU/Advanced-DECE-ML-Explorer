@@ -62,4 +62,36 @@ def get_data_meta():
 @api.route('/cf_meta', methods=['GET'])
 def get_cf_meta():
     data_meta = trans_data_meta(current_app.dir_manager.dataset_meta)
-    return jsoni
+    return jsonify(data_meta)
+
+
+@api.route('/data', methods=['GET'])
+def get_data():
+    data_df = current_app.dir_manager.load_prediction('dataset')
+    return Response(data_df.to_csv(index=False), mimetype="text/csv")
+
+
+@api.route('/r_counterfactuals', methods=['POST'])
+def get_cf_subset():
+    request_params = request.get_json()
+    filters = request_params["filters"]
+    num_filters = {f["name"]: {"min": f.get("extent", [0, 0])[0],
+                               "max": f.get("extent", [0, 0])[1]} for f in filters if
+                   current_app.dataset.is_num(f["name"])}
+    cat_filters = {f["name"]: {"categories": [str(cat) for cat in f['categories']] if f[
+                                                                                          'categories'] is not None else 'all'}
+                   for f in filters
+                   if not current_app.dataset.is_num(f["name"])}
+    filters = {**num_filters, **cat_filters}
+    index = current_app.dataset.get_subset(filters=filters).index.tolist()
+    r_counterfactuals = current_app.cf_engine.generate_r_counterfactuals(filters, True, True,
+                                                                         verbose=True)
+    r_counterfactuals_data = [r_counterfactuals.subsets[f].all.values.tolist() for f in
+                              current_app.dataset.features]
+    return jsonify({'index': index, 'counterfactuals': r_counterfactuals_data})
+
+
+@api.route('/predict', methods=['POST'])
+def predict_instance():
+    request_params = request.get_json()
+    query_instance = request_par
