@@ -94,4 +94,31 @@ def get_cf_subset():
 @api.route('/predict', methods=['POST'])
 def predict_instance():
     request_params = request.get_json()
-    query_instance = request_par
+    query_instance = request_params['queryInstance']
+    pred = current_app.model.report(x=[query_instance])[current_app.dataset.prediction]
+    return str(pred.values[0])
+
+
+@api.route('/counterfactuals', methods=['GET', 'POST'])
+def get_cf_instance():
+    request_params = request.get_json()
+    X = request_params['queryInstance']
+    k = request_params.get('k', -1)
+    num = request_params.get('cfNum', 1)
+    attr_mask = request_params.get('attrFlex', None)
+    if attr_mask is not None:
+        changeable_attr = [current_app.dataset.features[i] for i, t in enumerate(attr_mask) if t]
+    else:
+        changeable_attr = 'all'
+    range_list = request_params.get('attrRange', [])
+    for r in range_list:
+        if 'extent' in r:
+            r['min'], r['max'] = r['extent'][0], r['extent'][1]
+    cf_range = {r["name"]: {**r} for r in range_list}
+
+    setting = {'changeable_attr': changeable_attr, 'cf_range': cf_range,
+               'num': num, 'k': k}
+
+    cfs = current_app.cf_engine.generate_counterfactual_examples([X], setting).all[
+        current_app.dataset.features + [current_app.dataset.prediction]]
+    return jsonify(cfs.values.tolist())
